@@ -3,7 +3,7 @@ import { ElLoading } from "element-plus";
 const szdLoading = {
   loading: null,
   show: function (timeout) {
-    this.loading = ElLoading.service({ lock: true, background: "transparent" });
+    this.loading = ElLoading.service({ lock: true, background: "transparent", customClass: "u-el-loading-cust" });
     if (timeout > 0) {
       setTimeout(() => {
         if (this.loading) {

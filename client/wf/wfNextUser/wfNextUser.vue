@@ -16,9 +16,10 @@
         v-model="form.nextUserId"
         label="用户"
         showHelp
-        @help="szdSh({ a: 'CORE_USER', b: form, c: ['nextUserId-userId', 'nextUserName-userName'] })"
+        :help="{ a: 'CORE_USER', b: form, c: ['nextUserId-userId', 'nextUserName-userName'] }"
         :span="24"
         readonly
+        required
         :descSpan="12"
         :desc="form.nextUserName" />
     </el-form>
@@ -30,7 +31,7 @@
 </template>
 
 <script setup>
-  import { defineProps, defineEmits, ref, onMounted } from "vue";
+  import { ref, onMounted } from "vue";
   import { $m, $t } from "../../common/utils/globalConfig";
 
   //定义事件
@@ -75,7 +76,7 @@
 
   //数据确定
   const okayForm = () => {
-    if (form.value.nextUserId === "" || form.value.nextUserId.trim() === "") {
+    if (!form.value.nextUserId || form.value.nextUserId.trim() === "") {
       $m("CORE_CLIENT.E108"); //用户不能为空
       return;
     }

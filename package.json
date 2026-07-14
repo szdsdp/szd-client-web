@@ -1,14 +1,14 @@
 {
   "name": "szd-client-web",
-  "version": "1.0.0",
-  "description": "",
+  "version": "2.1.0",
+  "description": "SZD 组件库",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "http://192.168.101.170:8881/0001-szd/02-client/v2/client-web.git"
+    "url": "http://192.168.101.170:8881/0001-szd/02-client/v2.1/client-web.git"
   },
   "author": "",
   "license": "ISC"

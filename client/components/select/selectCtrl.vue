@@ -10,6 +10,7 @@
           :disabled="_ctrl.disabled"
           :clearable="_ctrl.clearable"
           :placeholder="_ctrl.placeholder"
+          :showKey="_ctrl.showKey"
           :first="_ctrl.first"
           :szdfst="_ctrl.szdfst"
           :szdopt="_ctrl.szdopt"
@@ -25,6 +26,7 @@
         :disabled="_ctrl.disabled"
         :clearable="_ctrl.clearable"
         :placeholder="_ctrl.placeholder"
+        :showKey="_ctrl.showKey"
         :first="_ctrl.first"
         :szdfst="_ctrl.szdfst"
         :szdopt="_ctrl.szdopt"
@@ -34,7 +36,7 @@
 </template>
 
 <script setup>
-  import { defineProps, defineEmits, computed } from "vue";
+  import { computed } from "vue";
 
   const props = defineProps({
     //输入框所需的参数
@@ -63,6 +65,7 @@
       hide: props.ctrl.hide || ["4", "5"].includes(props.ctrl.szdfst), //隐藏
       clearable: props.ctrl.clearable, //清空
       placeholder: props.ctrl.placeholder, //占位符
+      showKey: props.ctrl.showKey, //显示Key值
       first: props.ctrl.first, //值为空默认第一个
       descSpan: props.ctrl.descSpan, //描述宽度
       szdfst: props.ctrl.szdfst, //字段状态

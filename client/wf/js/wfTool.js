@@ -1,7 +1,8 @@
 import { createVNode, render } from "vue";
-import { $m } from "../../common/utils/globalConfig";
+import { $m, $mE, $mI, $mS, $mW } from "../../common/utils/globalConfig";
 import wfNextUser from "../wfNextUser/wfNextUser.vue";
 import wfConsume from "../wfConsume/wfConsume.vue";
+import wfVchView from "../wfVchView/wfVchView.vue";
 import szdRouter from "../../common/utils/goRouter";
 import { ElMessage } from "element-plus";
 import { wfInit } from "../api/wfApi.js";
@@ -16,6 +17,8 @@ const const_wfOper = {
   bussDocId: "", //单据号
   routerCode: "", //业务路由
   bstp: "", //业务类型
+  bstpName: "",
+  dyWfId: "",
   option: "C", //C创建 U更改 V显示
   //工作流按钮
   wfBtn: {
@@ -34,17 +37,24 @@ const const_wfOper = {
     btn_postAddSign: "",
     btn_delete: "",
     btn_dyWfId: "",
-    btn_consume: ""
+    btn_consume: "",
+    btn_remind: "",
+    nodeType: "",
+    wfExt: "",
+    wfExtBefore: "" //撤回时可能需要处理特殊逻辑
   },
   wfFst: {}, //屏幕字段状态
-  wfDef: {} //缺省值
+  wfDef: {}, //缺省值
+  wfOper: {
+    szdopt: "V"
+  }
 };
 
 /**
  * 工作流初始化
  * @param {String} routerCode 路由代码
  * @param {String} bstp 业务类型
- * @return {Promise} 返回工作流初始对象
+ * @return {Promise} 返回工作流初始对象 wfOper
  */
 export function init(routerCode, bstp = "") {
   return new Promise(resolve => {
@@ -71,10 +81,8 @@ export function init(routerCode, bstp = "") {
         } else {
           wfOper = const_wfOper;
         }
-        wfOper.routerCode = routerCode;
-        wfOper.bstp = _bstp;
         //关闭窗口
-        if (wfOper.option === "V") {
+        if (wfOper.wfOper.szdopt === "V") {
           $m("CORE_CLIENT.E104"); //无操作此业务权限
           szdRouter.closeFrameTag();
         }
@@ -89,10 +97,8 @@ export function init(routerCode, bstp = "") {
             } else {
               wfOper = const_wfOper;
             }
-            wfOper.routerCode = routerCode;
-            wfOper.bstp = resSh.data[0].bstp;
             //关闭窗口
-            if (wfOper.option === "V") {
+            if (wfOper.wfOper.szdopt === "V") {
               $m("CORE_CLIENT.E104"); //无操作此业务权限
               szdRouter.closeFrameTag();
             }
@@ -108,12 +114,12 @@ export function init(routerCode, bstp = "") {
 }
 
 /**
- * 无需检查的按钮 提交数据不需要检查的按钮 //删除、拒绝、撤回可以直接提交
+ * 无需检查的按钮 提交数据不需要检查的按钮 //删除、拒绝、撤回、转办可以直接处理
  * @param {Object} wfEvt 工作流事件按钮
  * @return {Boolean} true 不需要调用检查 false需要检查
  */
 export function btnCheck(wfEvt) {
-  return ["btn_delete", "btn_reject", "btn_revoke"].includes(wfEvt.operate);
+  return ["btn_delete", "btn_reject", "btn_revoke", "btn_transfer"].includes(wfEvt.operate);
 }
 
 /**
@@ -128,7 +134,7 @@ export function wfInfo(bussId) {
  * 返回结果处理
  * @param {Object} wfParam
  * {
- *  1. retCodeF: Q.不启用工作流 C缺少审批人 B审批成功 S保存成功 E审批失败
+ *  1. retCodeF: Q.不启用工作流 C缺少审批人 B审批成功 S保存成功 E审批失败 W警告(业务程序可以设置)
  *  2. retMsg:提示消息
  *  3. retMsgBox：消息列表
  *  4. wfResult:  流程处理结果
@@ -152,32 +158,82 @@ export function wfInfo(bussId) {
  *   }
  *  }
  *  5.wfParamEvt:操作参数
+ *  6.wfParamBuss:工作流传输core的参数，主要是流程字段
+ * }
+ * @param {Object} wfEvt 工作流事件按钮参数
+ * {
+ *    userId: 操作用户ID
+ *    bussId: 业务Id
+ *    bussDocId: 业务单据
+ *    routerCode: 路由代码
+ *    operate:操作事件
+ *    operateOkayClose：操作事件成功后关闭窗口
+ *    comments:  审批意见、转办意见
+ *    addUserId: 加签用户ID
+ *    tranUserId: 转办用户ID
+ *    noticeUserIds: @用户ID
+ *    operateReason: 操作原因
+ *    rejectToFlag:  驳回方式[A.拒绝节点,B.发起人,C.指定节点]
+ *    rejectToNodeCode:  驳回节点
+ *    nextInstNodeId: 下一个处理节点Id
+ *    nextUserId: 下一个处理人前端指定
+ *    submitFlag：再次执行提交 true：提交 false: 不再执行, 针对警告后确认再次执行，和前端选择用户再次执行
+ *    warningExec：警告后确认再次执行
  * }
  *
  *  @return {Promise} 返回Boolean或对象，返回false不需要处理、返回true刷新数据、返回其它对象重新提交
  */
-export function retInfo(wfParam) {
+export function retInfo(wfParam, wfEvt) {
   return new Promise(resolve => {
+    //再次执行提交-重置
+    if (wfEvt) {
+      wfEvt.submitFlag = false;
+      wfEvt.warningExec = false;
+    }
     //消息弹框
-    szdMsgBox(wfParam.retMsgBox).then(() => {
-      wfParam.retMsg = wfParam.retMsg || $m("CORE_CLIENT.E105", "", false, true); //技术错误，未返回任何信息
-      if (wfParam.retCodeF === "Q") {
-        resolve(true);
-      } else if (wfParam.retCodeF === "C") {
-        ElMessage.warning(wfParam.retMsg);
-        nextUser(wfParam).then(resNext => {
-          resolve(resNext);
-        });
-      } else if (wfParam.retCodeF === "B" || wfParam.retCodeF === "S") {
-        ElMessage.success(wfParam.retMsg);
-        //关闭窗口
-        if (wfParam.wfResult && wfParam.wfResult.retCode === "B008") {
-          szdRouter.closeFrameTag();
-        } else {
+    szdMsgBox(wfParam.retMsgBox, wfParam.retCodeF === "W").then(resMsg => {
+      if (resMsg) {
+        wfParam.retMsg = wfParam.retMsg || $m("CORE_CLIENT.E105", "", false, true); //技术错误，未返回任何信息
+        if (wfParam.retCodeF === "Q") {
           resolve(true);
+        } else if (wfParam.retCodeF === "C") {
+          ElMessage.warning(wfParam.retMsg);
+          nextUser(wfParam).then(resNext => {
+            // 前端指定下一个处理人
+            if (wfEvt && resNext !== true && resNext.nextUserId) {
+              wfEvt.nextInstNodeId = wfParam.wfParamEvt && wfParam.wfParamEvt.nextInstNodeId ? wfParam.wfParamEvt.nextInstNodeId : "";
+              wfEvt.nextUserId = resNext.nextUserId;
+              wfEvt.submitFlag = true;
+            }
+            resolve(resNext);
+          });
+        } else if (wfParam.retCodeF === "B" || wfParam.retCodeF === "S") {
+          ElMessage.success(wfParam.retMsg);
+          //关闭窗口
+          if ((wfParam.wfParamEvt && wfParam.wfParamEvt.operateOkayClose === true) || (wfParam.wfResult && wfParam.wfResult.retCode === "B008")) {
+            szdRouter.closeFrameTag();
+          }
+          resolve(true);
+        } else if (wfParam.retCodeF === "W") {
+          ElMessage.warning(wfParam.retMsg);
+          // 警告后确认，再继续处理
+          if (wfEvt) {
+            wfEvt.submitFlag = true;
+            wfEvt.warningExec = true;
+          }
+          resolve(true);
+        } else {
+          ElMessage.error(wfParam.retMsg);
+          resolve(false);
         }
       } else {
-        ElMessage.error(wfParam.retMsg);
+        if (wfParam.retMsg) {
+          if (wfParam.retCodeF === "E") {
+            ElMessage.error(wfParam.retMsg);
+          } else {
+            ElMessage.warning(wfParam.retMsg);
+          }
+        }
         resolve(false);
       }
     });
@@ -201,7 +257,7 @@ export function nextUser(wfParam) {
       },
       onCloseForm: () => {
         if (!resolveFlag) {
-          reject(false);
+          resolve(false);
         }
         document.body.removeChild(div);
       }
@@ -213,18 +269,63 @@ export function nextUser(wfParam) {
 }
 
 /**
+ * 自定义工作流按钮初始化
+ * @param {Object} param 参数同返回参数
+ * @return {Object} 返回对象
+ * {
+ * userId:用户Id,
+ * bussId:业务Id,
+ * bussDocId:业务单号,
+ * routerCode:路由代码,
+ * operate:操作事件枚举：['btn_check.检查','btn_save.保存','btn_commit.提交','btn_approve.同意','btn_reject.驳回','btn_revoke.撤回','btn_transfer.转办','btn_preAddSign.前加签','btn_postAddSign.后加签','btn_delete.作废']
+ * comments:  审批意见、转办意见
+ * addUserId:加签ID, addUserName:加签姓名,
+ * tranUserId:转办ID, tranUserName:转办姓名,
+ * noticeUserIds:@用户ID, noticeUserNames: @用户姓名,
+ * operateReason: 操作原因
+ * rejectToFlag:  驳回方式[A.拒绝节点,B.发起人,C.指定节点]
+ * rejectToNodeCode:  驳回节点
+ * nextInstNodeId: 下一个处理节点Id
+ * nextUserId:下一个处理人前端指定, nextUserName: 下一审批用户姓名,
+ * submitFlag：再次执行提交 true：提交 false: 不再执行, 针对警告后确认再次执行，和前端选择用户再次执行
+ * warningExec：警告后确认再次执行
+ * }
+ * */
+export function wfEvtInit(param) {
+  return {
+    userId: param && param.userId ? param.userId : "",
+    bussId: param && param.bussId ? param.bussId : "",
+    bussDocId: param && param.bussDocId ? param.bussDocId : "",
+    routerCode: param && param.routerCode ? param.routerCode : "",
+    operate: param && param.operate ? param.operate : "",
+    comments: param && param.comments ? param.comments : "",
+    addUserId: param && param.addUserId ? param.addUserId : "",
+    addUserName: param && param.addUserName ? param.addUserName : "",
+    tranUserId: param && param.tranUserId ? param.tranUserId : "",
+    tranUserName: param && param.tranUserName ? param.tranUserName : "",
+    noticeUserIds: param && param.noticeUserIds ? param.noticeUserIds : "",
+    noticeUserNames: param && param.noticeUserNames ? param.noticeUserNames : "",
+    operateReason: param && param.operateReason ? param.operateReason : "",
+    rejectToFlag: param && param.rejectToFlag ? param.rejectToFlag : "",
+    rejectToNodeCode: param && param.rejectToNodeCode ? param.rejectToNodeCode : "",
+    nextInstNodeId: param && param.nextInstNodeId ? param.nextInstNodeId : "",
+    nextUserId: param && param.nextUserId ? param.nextUserId : "",
+    submitFlag: false,
+    warningExec: false
+  };
+}
+
+/**
  * 消费记录
- * @param {Object} bussBase 业务主体
- * @param {Array} invList 已选发票清单
+ * @param {Object} bussParam 参数 {bussId业务Id,bstp业务类型,invList:[]已存在发票清单}
  * @return {Promise} 返回数组是选择的消费记录
  */
-export function consume(bussBase, invList) {
+export function consume(bussParam) {
   return new Promise((resolve, reject) => {
     let resolveFlag = false;
     const div = document.createElement("div");
     const vNode = createVNode(wfConsume, {
-      bussBase: bussBase,
-      invList: invList,
+      bussParam: bussParam,
       onOkay: retObj => {
         resolve(retObj);
         resolveFlag = true;
@@ -239,6 +340,51 @@ export function consume(bussBase, invList) {
     vNode.appContext = ctx;
     document.body.appendChild(div);
     render(vNode, div);
+  });
+}
+
+/**
+ * 返回消息提示
+ * @param {Object} retParam 参数 {status: 状态,msg:消息,retMsgBox:消息框}
+ */
+export function retMsg(retParam) {
+  if (retParam) {
+    szdMsgBox(retParam.retMsgBox).then();
+    if (retParam.msg) {
+      if (retParam.status === "S") {
+        $mS(retParam.msg);
+      } else if (retParam.status === "E") {
+        $mE(retParam.msg);
+      } else if (retParam.status === "W") {
+        $mW(retParam.msg);
+      } else {
+        $mI(retParam.msg);
+      }
+    }
+  }
+}
+
+/**
+ * 凭证预览
+ * @param {Object} vchParam 参数 {header:{} 凭证抬头,itemList:[]凭证分录}
+ */
+export function vchView(vchParam) {
+  return new Promise(resolve => {
+    if (vchParam.status === "E") {
+      $mE(vchParam.msg);
+    } else {
+      const div = document.createElement("div");
+      const vNode = createVNode(wfVchView, {
+        vchParam: vchParam,
+        onCloseForm: () => {
+          resolve();
+          document.body.removeChild(div);
+        }
+      });
+      vNode.appContext = ctx;
+      document.body.appendChild(div);
+      render(vNode, div);
+    }
   });
 }
 

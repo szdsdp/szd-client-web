@@ -17,24 +17,14 @@ function dataSort(dataObj, lay) {
   const rule = lay.value.sortRule;
   const l_ruleLen = rule.length;
   const l_rowsLen = dataObj.value.length;
-  if (l_ruleLen === 0 && l_rowsLen === 0) return;
+  if (l_ruleLen === 0 || l_rowsLen === 0) return;
   //排序字段设置
   let sortCat = [];
   for (let j = 0; j < rule.length; j++) {
     sortCat.push({ field: rule[j].field, order: rule[j].order, type: lay.value.fCatUse[rule[j].field].type });
   }
-  //是否存在隐藏行排序
-  const l_rowHide = Object.keys(lay.value.fRanges).length > 0;
   //数据排序
   dataObj.value.sort((a, b) => {
-    //隐藏行排序
-    if (l_rowHide) {
-      if (a["$SZDRowHide"] < b["$SZDRowHide"]) {
-        return 1;
-      } else if (a["$SZDRowHide"] > b["$SZDRowHide"]) {
-        return -1;
-      }
-    }
     //正常行排序
     let l_res = 0;
     for (let i = 0; i < l_ruleLen; i++) {

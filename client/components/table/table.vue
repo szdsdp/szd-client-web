@@ -1,7 +1,13 @@
 <template>
   <div v-if="dg.open" class="app-sub-container app-sub-sub flex-y flex-1">
     <!--  工具栏  -->
-    <tableToolbar v-if="!_lay.tBar.hide" ref="refToolbar" v-model:lay="_lay" :dataObj="_dataObj" @clickToolbar="handleClickToolbar" />
+    <tableToolbar
+      v-if="!_lay.tBar.hide"
+      ref="refToolbar"
+      v-model:lay="_lay"
+      :dataObj="_dataObj"
+      :callMethod="callMethod"
+      @clickToolbar="handleClickToolbar" />
     <!--  输出表格  -->
     <div class="flex-1 ovh">
       <tableComp
@@ -27,7 +33,7 @@
 </template>
 
 <script setup>
-  import { computed, ref, defineProps, defineEmits, watch, defineExpose, onBeforeMount, nextTick } from "vue";
+  import { computed, ref, watch, onBeforeMount, nextTick } from "vue";
   import { initTableLay, initLayVarDef } from "./js/tableParam";
   import { initLayAuth, initOper } from "./js/tableParamAuth";
   import { dataSortFilter } from "./js/tableFuncSortFilter";
@@ -70,6 +76,11 @@
     //权限对象 {szdopt:操作权限字符,szdkey:主表key字符,szdfst:字段状态对象,szdbtn:按钮状态对象}
     oper: {
       type: Object
+    },
+    //属性值绑定方法
+    callMethod: {
+      type: Function,
+      default: undefined
     }
   });
   //定义事件
@@ -162,8 +173,14 @@
           dataSortFilter(_dataObj, _lay, _tParObj);
         }
         break;
+      case "$add":
+        if (_lay.value.layout.addRowMode) {
+          obj.fCode = "$addCall";
+          handleEventImp({ fCode: obj.fCode, fCatUse: _lay.value.fCatUse });
+        }
+        break;
       default:
-        if (!obj.fCode.startsWith("$") || obj.fCode === "$upload") {
+        if (!obj.fCode.startsWith("$") || ["$upload", "$exportLay"].includes(obj.fCode)) {
           handleEventImp(obj);
         }
         break;
@@ -174,7 +191,7 @@
 
   //数据改变
   watch(
-    () => [props.sortRule, props.data],
+    () => props.data,
     () => {
       nextTick(() => {
         dataSortFilter(_dataObj, _lay, _tParObj);
@@ -205,6 +222,10 @@
   //刷新表格
   const refreshTable = () => {
     _lay.value = initTableLay(props.layout, props.fieldCat, props.toolbar, props.sortRule);
+    setTimeout(() => {
+      dataSortFilter(_dataObj, _lay, _tParObj);
+      refTableComp.value.handleClickToolbar({ fCode: "$refresh" });
+    }, 100);
   };
 
   //定义父组件可用方法

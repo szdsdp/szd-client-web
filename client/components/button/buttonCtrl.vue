@@ -1,5 +1,5 @@
 <template>
-  <template v-if="!_ctrl.hide || _ctrl.notAuth">
+  <template v-if="!_ctrl.hide">
     <template v-if="_ctrl.tip">
       <el-tooltip effect="light" :content="_ctrl.tip" placement="top-start">
         <szd-button
@@ -8,7 +8,7 @@
           :text="_ctrl.text"
           :link="_ctrl.link"
           :disabled="_ctrl.disabled"
-          :notAuth="_ctrl.notAuth"
+          :noAuth="_ctrl.noAuth"
           :icon="_ctrl.icon"
           :color="_ctrl.color"
           :szdfst="_ctrl.szdfst"
@@ -23,7 +23,7 @@
         :text="_ctrl.text"
         :link="_ctrl.link"
         :disabled="_ctrl.disabled"
-        :notAuth="_ctrl.notAuth"
+        :noAuth="_ctrl.noAuth"
         :icon="_ctrl.icon"
         :color="_ctrl.color"
         :szdfst="_ctrl.szdfst"
@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-  import { defineProps, defineEmits, computed } from "vue";
+  import { computed } from "vue";
 
   const props = defineProps({
     //控件参数
@@ -53,7 +53,7 @@
       text: props.ctrl.text, //是否为文字按钮
       link: props.ctrl.link, //是否为链接按钮
       disabled: props.ctrl.disabled, //是否可用
-      notAuth: props.ctrl.notAuth, //无权限
+      noAuth: props.ctrl.noAuth, //不检查权限
       icon: props.ctrl.icon, //图标
       color: props.ctrl.color, //按钮颜色
       hide: props.ctrl.hide || ["4", "5"].includes(props.ctrl.szdfst), //隐藏

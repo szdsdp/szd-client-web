@@ -4,6 +4,7 @@ import store from "~store";
 import { ElMessageBox, ElMessage } from "element-plus";
 import errorCode from "./errorCode";
 import szdStoreCookie from "../store/storeCookie";
+import szdStoreSession from "../store/storeSession";
 
 axios.defaults.headers["Content-Type"] = "application/json;charset=utf-8";
 axios.defaults.headers["Accept-Language"] = szdStoreCookie.getLanguage() ? szdStoreCookie.getLanguage() : "zh-CN";
@@ -22,6 +23,9 @@ let messageBoxFlag = 0;
 // request拦截器
 service.interceptors.request.use(
   config => {
+    //超时设置
+    const timeoutConnect = szdStoreSession.getWebParams("timeout", false)?.[process.env.VUE_APP_SYS_CODE + "_WEB"];
+    if (timeoutConnect && timeoutConnect > 10000) config.timeout = timeoutConnect;
     // 是否需要设置 token
     const isToken = (config.headers || {}).isToken === false;
     if (szdStoreCookie.getToken() && !isToken) {
@@ -67,6 +71,7 @@ service.interceptors.response.use(
             });
         }
       }
+      return res.data;
     } else if (code === 500) {
       ElMessage({ showClose: true, message: message, type: "error" });
       return res.data; //Promise.reject(new Error(message))

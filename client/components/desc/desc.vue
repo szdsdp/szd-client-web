@@ -1,24 +1,22 @@
 <template>
   <!-- 通用描述标签 -->
-  <div>
-    <div v-text="val" class="code-desc-scrollbar" />
-  </div>
+  <div v-text="_modelValue" class="code-desc-scrollbar" />
 </template>
 
-<script>
-  export default {
-    props: ["modelValue"],
-    data() {
-      return {
-        val: this.modelValue
-      };
+<script setup>
+  import { computed } from "vue";
+
+  const props = defineProps({
+    modelValue: {
+      default: ""
     },
-    watch: {
-      modelValue(val) {
-        this.val = val;
-      }
-    }
-  };
+    text: {}
+  });
+
+  //值数据
+  const _modelValue = computed(() => {
+    return props.text !== undefined ? props.text : props.modelValue;
+  });
 </script>
 
 <style scoped>
@@ -26,6 +24,7 @@
   .code-desc-scrollbar {
     padding-left: 5px;
     display: block;
+    text-align: left;
     white-space: nowrap;
     overflow: auto;
     color: #606266;

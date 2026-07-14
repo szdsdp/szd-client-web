@@ -7,7 +7,6 @@
 </template>
 
 <script setup>
-  import { defineProps } from "vue";
   import szdTool from "../../common/tools/tool";
 
   const props = defineProps({

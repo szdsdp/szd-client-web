@@ -1,6 +1,6 @@
 <template>
   <el-input
-    v-if="!_fst.hide"
+    v-if="!_fst.hide && !_autocomplete"
     ref="inputRef"
     v-model="_modelValue"
     :placeholder="placeholder"
@@ -13,16 +13,49 @@
     :ondblclick="dblclick ? handleOnDblClick : ''"
     @keydown.enter="enter ? handleKeydownEnter() : ''"
     @input="handleInput"
+    @compositionstart="handleCompositionStart"
+    @compositionend="handleCompositionEnd"
     @change="handleChange"
     @focus="handleFocus"
     @blur="handleBlur">
     <template #suffix>
-      <el-icon v-if="showHelp">
+      <el-icon v-if="showHelp" @mousedown.prevent>
         <Search @click.prevent.stop="_fst.disabled ? '' : handleHelp()" />
       </el-icon>
     </template>
   </el-input>
-  <!--     :disabled="disabled" -->
+  <!-- 自动补全 -->
+  <el-autocomplete
+    v-else-if="!_fst.hide"
+    ref="inputRef"
+    v-model="_modelValue"
+    :placeholder="placeholder"
+    :maxlength="maxlength"
+    :readonly="_fst.readonly || _fst.disabled"
+    :clearable="clearable"
+    :input-style="{ textAlign: _align }"
+    :class="[dblclick ? 'dblclickFont' : '', _fst.disabled ? 'disabledBg' : '']"
+    :ondblclick="dblclick ? handleOnDblClick : ''"
+    @keydown.enter="handleAutocompleteKeydownEnter()"
+    @input="handleInput"
+    @change="handleAutocompleteChange"
+    @focus="handleFocus"
+    @blur="handleAutocompleteBlur"
+    :trigger-on-focus="false"
+    value-key="svalue"
+    :fetch-suggestions="handleAutocompleteQueryAsync"
+    @select="handleAutocompleteSelect">
+    <template #suffix>
+      <el-icon v-if="showHelp" @mousedown.prevent>
+        <Search @click.prevent.stop="_fst.disabled ? '' : handleHelp()" />
+      </el-icon>
+    </template>
+    <template #default="{ item }">
+      <span style="padding-right: 5px">{{ item.svalue }}</span>
+      <span>{{ item.sname }}</span>
+    </template>
+  </el-autocomplete>
+  <!-- :disabled="disabled" 不能触发双击事件 -->
 </template>
 
 <script setup>
@@ -30,9 +63,11 @@
   import _ from "lodash";
   import { $m, $t } from "../../common/utils/globalConfig";
   import { addThousandSeparator, removeThousandSeparator } from "pixiu-number-toolkit";
-  import { defineProps, defineEmits, computed, ref, nextTick, watch } from "vue";
+  import { computed, ref, nextTick, watch } from "vue";
   import { szdSh } from "../searchHelp/serchHelp";
   import szdComp from "../../common/utils/component";
+  import store from "~store";
+  import { getAutocompleteList } from "../../components/api/searchHelp";
 
   const props = defineProps({
     modelValue: {
@@ -112,6 +147,7 @@
   //值数据
   const _modelValue = ref();
   const numFormat = ref(false);
+  const isComposing = ref(false);
   //编辑状态
   const _fst = computed(() => {
     return szdComp.getCompFst(props.szdfst, props.szdopt, props.disabled, props.readonly);
@@ -138,6 +174,15 @@
       return setFormatObj();
     }
   });
+  //自动补全
+  const _autocomplete = computed(() => {
+    if (props.type === "string" && props.showHelp && props.help && props.help.a && !_fst.value.disabled && !_fst.value.readonly) {
+      if (store.state.loginUser && store.state.loginUser.autocomplete.includes(props.help.a)) return true;
+    }
+    return false;
+  });
+  const _isAutocompleteKeydownEnter = ref(false);
+  const _isAutocompleteSelecting = ref(false);
 
   //监听值数据
   watch(
@@ -178,8 +223,9 @@
   };
   //顺序1.当选择器的输入框获得焦点时触发
   const handleFocus = e => {
+    if (_fst.value.disabled || _fst.value.readonly) return;
     //数值型
-    if (props.type === "number") {
+    if (props.type === "number" && e && e.target && e.target.value) {
       numFormat.value = false;
       //去除千分位符
       if (props.numDot && e.target.value && e.target.value.includes(",")) {
@@ -189,13 +235,23 @@
       if (!isNaN(props.numDec) && props.numDec >= 0 && e.target.value) {
         e.target.value = Number(e.target.value).toFixed(props.numDec);
       }
+      //赋值
+      _modelValue.value = e.target.value;
     }
-    //赋值
-    _modelValue.value = e.target.value;
     emit("focus", e);
+  };
+  //监听中文输入法开始/结束
+  const handleCompositionStart = () => {
+    isComposing.value = true;
+  };
+  const handleCompositionEnd = e => {
+    isComposing.value = false;
+    handleOninput(e);
   };
   //顺序2.原生输入事件
   const handleOninput = e => {
+    if (isComposing.value) return;
+    let _val = _modelValue.value;
     if (props.type === "number") {
       //包含,直接替换
       e.target.value = e.target.value.replace(/,/g, "");
@@ -218,6 +274,9 @@
         _modelValue.value = e.target.value; //赋值
       }
     }
+    nextTick(() => {
+      if (_val !== _modelValue.value) emit("input", _modelValue.value);
+    });
   };
   //顺序4.文本输入事件
   const handleInput = v => {
@@ -235,11 +294,12 @@
         val = "0";
       }
       //检查大小
-      if (!isNaN(props.numMax) && Number(val) > props.numMax) {
+      if (props.numMax !== undefined && props.numMax !== null && !isNaN(props.numMax) && Number(val) > Number(props.numMax)) {
         //检查数值是否超过最大值
         $m("CORE_CLIENT.E071", props.numMax); //最大值为 &
         val = props.numMax;
-      } else if (!isNaN(props.numMin) && Number(val) < props.numMin) {
+      }
+      if (props.numMin !== undefined && props.numMin !== null && !isNaN(props.numMin) && Number(val) < Number(props.numMin)) {
         //检查数值是否超过最小值
         $m("CORE_CLIENT.E072", props.numMin); //最小值为 &
         val = props.numMin;
@@ -253,6 +313,7 @@
       }
       //字符串格式化为数字
       val = Number(val);
+      _modelValue.value = val;
       //更新数据
       emit("update:modelValue", val);
       emit("change", val);
@@ -270,6 +331,7 @@
             v = v.toLowerCase();
           }
         }
+        _modelValue.value = v;
       }
       //更新数据
       emit("update:modelValue", v);
@@ -278,8 +340,9 @@
   };
   //顺序6.当选择器的输入框失去焦点时触发,不对数据变更返回到存储对象
   const handleBlur = e => {
+    if (_fst.value.disabled || _fst.value.readonly) return;
     // 数值类型进行检查
-    if (props.type === "number" && !numFormat.value && !e.target.value.includes(",")) {
+    if (props.type === "number" && !numFormat.value && e.target.value && !e.target.value.includes(",")) {
       numFormat.value = true;
       if (_noZero.value && !Number(_modelValue.value)) {
         e.target.value = "";
@@ -301,7 +364,7 @@
 
   //调用搜索帮助事件
   const handleHelp = () => {
-    if (!props.help || !props.help.a) {
+    if (!props.help || !props.help.a || props.showHelp === "A") {
       emit("help");
     } else {
       szdSh(props.help).then(res => {
@@ -346,6 +409,8 @@
           return setFormatObjJson("^[A-Za-z0-9._-]*$", "upper", false, $t("请输入字母、数字、下划线、中划线、点"));
         case "upper_": //大写  字母、数字、下划线、中划线
           return setFormatObjJson("^[A-Za-z0-9_-]*$", "upper", false, $t("请输入字母、数字、下划线、中划线"));
+        case "upper,": //大写  字母、数字、下划线、中划线、点、逗号
+          return setFormatObjJson("^[A-Za-z0-9.,_-]*$", "upper", false, $t("请输入字母、数字、下划线、中划线、点、逗号"));
         case "upperAlp": //大写  字母
           return setFormatObjJson("^[A-Za-z]*$", "upper", false, $t("请输入字母"));
         case "upperAlpNum": //大写  字母、数字、
@@ -354,6 +419,8 @@
           return setFormatObjJson("^[A-Za-z0-9._-]*$", "lower", false, $t("请输入字母、数字、下划线、中划线、点"));
         case "lower_": //小写  字母、数字、下划线、中划线
           return setFormatObjJson("^[A-Za-z0-9_-]*$", "lower", false, $t("请输入字母、数字、下划线、中划线"));
+        case "lower,": //小写  字母、数字、下划线、中划线、点、逗号
+          return setFormatObjJson("^[A-Za-z0-9.,_-]*$", "lower", false, $t("请输入字母、数字、下划线、中划线、点、逗号"));
         case "lowerAlp": //小写  字母
           return setFormatObjJson("^[A-Za-z]*$", "lower", false, $t("请输入字母"));
         case "lowerAlpNum": //小写  字母、数字、
@@ -376,5 +443,55 @@
       error: _.isBoolean(_error) ? _error : false,
       errMsg: _errMsg ? _errMsg : $t("数据格式错误")
     };
+  };
+
+  //自动补全-查询
+  const handleAutocompleteQueryAsync = (queryString, cb) => {
+    _isAutocompleteSelecting.value = false;
+    if (queryString && !_isAutocompleteKeydownEnter.value) {
+      getAutocompleteList(props.help.a, queryString).then(res => {
+        let _options = [];
+        if (res && res.data && res.data.valList && res.data.valList.length > 0) {
+          _options = res.data.valList;
+          _isAutocompleteSelecting.value = true;
+        }
+        cb(_options);
+      });
+    } else {
+      cb([]);
+    }
+    _isAutocompleteKeydownEnter.value = false;
+  };
+  //自动补全-选择
+  const handleAutocompleteSelect = item => {
+    _isAutocompleteKeydownEnter.value = false;
+    _isAutocompleteSelecting.value = false;
+    if (props.help.b && props.help.j && props.help.j !== true) {
+      props.help.b[props.help.j] = item.sname;
+    }
+    handleChange(_modelValue.value);
+  };
+  //自动补全-改变
+  const handleAutocompleteChange = v => {
+    if (!_isAutocompleteSelecting.value) {
+      handleChange(v);
+    }
+  };
+  //自动补全-失去焦点
+  const handleAutocompleteBlur = e => {
+    if (_isAutocompleteSelecting.value) {
+      handleChange(_modelValue.value);
+    }
+    _isAutocompleteSelecting.value = false;
+    setTimeout(() => {
+      handleBlur(e);
+    });
+  };
+  //自动补全-回车事件
+  const handleAutocompleteKeydownEnter = () => {
+    _isAutocompleteKeydownEnter.value = true;
+    if (props.enter) {
+      handleKeydownEnter();
+    }
   };
 </script>

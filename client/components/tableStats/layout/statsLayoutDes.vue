@@ -159,7 +159,7 @@
 
 <script setup>
   import "../css/stats.scss";
-  import { computed, defineProps, onMounted } from "vue";
+  import { computed, onMounted } from "vue";
   import { $t } from "../../../common/utils/globalConfig";
   import Sortable from "sortablejs";
   import { handleOnEndAreaALL, handleOnEndAreaDim, handleOnEndAreaTar, setPos } from "../js/statsLayout";

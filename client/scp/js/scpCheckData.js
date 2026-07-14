@@ -9,6 +9,8 @@ import { getCheckDstArr, getFstDst } from "./scpFstField";
  *    tableType:数据结构类型 A抬头 B行表 C子表
  *    rowKey: 行健值字段
  *    rowKeyAuto:行健值自动流水
+ *    rowRequired:行必输
+ *    checkDuplicate:检查重复
  *    cols:[{ //必输检查的字段
  *      fieldCode:字段代码
  *      fieldName:字段名称
@@ -22,6 +24,8 @@ import { getCheckDstArr, getFstDst } from "./scpFstField";
  *      tableName:数据结构名称
  *      rowKey: 子表健值字段
  *      rowKeyAuto:子表健值自动流水
+ *      rowRequired:行必输
+ *      checkDuplicate:检查重复
  *      cols:[{ //必输检查的字段
  *        fieldCode:字段代码
  *        fieldName:字段名称
@@ -52,19 +56,25 @@ export function checkData(ruleCat, dataObj, preSubTable = "") {
 
     //检查抬头数据
     if (rule.tableType === "A") {
-      checkDataObj(rule, dataObj.header[rule.tableCode], errMsg, "", "");
+      checkDataObj(rule, dataObj.header[rule.tableCode], errMsg, "", "", undefined);
       continue;
     }
 
     //检查行数据
     const rows = dataObj.item[rule.tableCode];
-    if (!rows || rows.length === 0) continue;
+    if (!rows || rows.length === 0) {
+      if (rule.rowRequired) {
+        errMsg.push({ light: "1", retCode: "E", retMsg: "[ " + rule.tableName + " ]项目行必须存在" });
+      }
+      continue;
+    }
+    let ck = [];
     //检查行数据
     for (let j = 0; j < rows.length; j++) {
       const row = rows[j];
       const itemNo = rule.rowKey && row[rule.rowKey] ? row[rule.rowKey] : j + 1;
       //行数据检查
-      checkDataObj(rule, row, errMsg, itemNo, "");
+      checkDataObj(rule, row, errMsg, itemNo, "", ck);
       //子表数据检查
       checkDataSubTable(rule, row, errMsg, preSubTable, itemNo);
     }
@@ -82,64 +92,76 @@ function checkDataSubTable(rule, row, errMsg, preSubTable, itemNo) {
     if (!ruleSub.tableCode) continue;
     //检查子表数据
     const rowSubs = row[preSubTable + ruleSub.tableCode];
-    if (!rowSubs || rowSubs.length === 0) continue;
+    if (!rowSubs || rowSubs.length === 0) {
+      if (ruleSub.rowRequired) {
+        errMsg.push({ light: "1", retCode: "E", retMsg: "第 " + itemNo + " 行[ " + ruleSub.tableName + " ]子项目行必须存在" });
+      }
+      continue;
+    }
+    let ckSub = [];
     //子表数据检查
     for (let j = 0; j < rowSubs.length; j++) {
       const rowSub = rowSubs[j];
       const itemSubNo = ruleSub.rowKey && rowSub[ruleSub.rowKey] ? rowSub[ruleSub.rowKey] : j + 1;
       //子表数据检查
-      checkDataObj(ruleSub, rowSub, errMsg, itemNo, itemSubNo);
+      checkDataObj(ruleSub, rowSub, errMsg, itemNo, itemSubNo, ckSub);
     }
   }
 }
 
-function checkDataObj(rule, obj, errMsg, itemNo, itemSubNo) {
-  //检查规则
-  if (!rule.cols || rule.cols.length === 0) return;
+function checkDataObj(rule, obj, errMsg, itemNo, itemSubNo, ck) {
   //消息
-  let msg;
+  let msg = "";
   if (rule.tableType === "A") {
-    msg = "抬头";
+    msg = "[ " + rule.tableName + " ]";
   } else if (rule.tableType === "B") {
-    msg = "行项目[第 " + itemNo + " 行]";
+    msg = "[ " + rule.tableName + " ]项目[第 " + itemNo + " 行]";
   } else {
-    msg = "子项目[第 " + itemNo + "," + itemSubNo + " 行]";
-  }
-  let msgTable = "，表[ " + rule.tableName + " ]";
-
-  if (!obj) {
-    errMsg.push({ light: "1", retCode: "E", retMsg: msg + "对象不能为空" + msgTable });
-    return;
+    msg = "[ " + rule.tableName + " ]项目[第 " + itemNo + " / " + itemSubNo + " 行]";
   }
   //检查必输
-  for (let i = 0; i < rule.cols.length; i++) {
-    const col = rule.cols[i];
-    if (col.fieldCode) {
+  if (rule.cols?.length > 0) {
+    if (!obj) {
+      errMsg.push({ light: "1", retCode: "E", retMsg: msg + "对象不能为空" });
+      return;
+    }
+    //检查必输
+    for (let i = 0; i < rule.cols.length; i++) {
+      const col = rule.cols[i];
+      if (!col.fieldCode) continue;
       if (!obj[col.fieldCode]) {
-        errMsg.push({ light: "1", retCode: "E", retMsg: msg + "字段[ " + col.fieldName + " ]不能为空" + msgTable });
-        return;
+        errMsg.push({ light: "1", retCode: "E", retMsg: msg + "字段[ " + col.fieldName + " ]不能为空" });
+        continue;
       }
       //多选复选框检查
       if (col.fieldType === "array" && col.ctrlType === "checkbox") {
         const lenArr = obj[col.fieldCode].length;
         if (lenArr === 0) {
-          errMsg.push({
-            light: "1",
-            retCode: "E",
-            retMsg: msg + "字段[ " + col.fieldName + " ]不能为空" + msgTable
-          });
-          return;
+          errMsg.push({ light: "1", retCode: "E", retMsg: msg + "字段[ " + col.fieldName + " ]不能为空" });
+          continue;
         }
         if ((col.min > 0 && lenArr < col.min) || (col.max > 0 && lenArr > col.max)) {
-          errMsg.push({
-            light: "1",
-            retCode: "E",
-            retMsg: msg + "字段[ " + col.fieldName + " ]复选框选中数不正确" + msgTable
-          });
-          return;
+          errMsg.push({ light: "1", retCode: "E", retMsg: msg + "字段[ " + col.fieldName + " ]复选框选中数不正确" });
+          continue;
         }
       }
+      //检查附件
+      if (col.ctrlType === "upload" && (!obj["$SZDUpload_" + col.fieldCode] || obj["$SZDUpload_" + col.fieldCode] === 0)) {
+        errMsg.push({ light: "1", retCode: "E", retMsg: msg + "字段[ " + col.fieldName + " ]附件不能为空" });
+        continue;
+      }
     }
+  }
+  //检查重复
+  if (rule.checkDuplicate?.length > 0 && ck) {
+    let ckStr = "";
+    for (let i = 0; i < rule.checkDuplicate.length; i++) {
+      ckStr += obj[rule.checkDuplicate[i]] + "|";
+    }
+    if (ck.includes(ckStr)) {
+      errMsg.push({ light: "1", retCode: "E", retMsg: msg + "数据重复" });
+    }
+    ck.push(ckStr);
   }
 }
 
@@ -231,15 +253,14 @@ export function checkDataDst(struct, szddst, dataObj, preSubTable = "") {
 
 //抬头表检查-字段状态： 1.可选  2.必输  3.仅显示、4.隐藏、5.隐藏-清空
 function checkDataDstObjA(ckItem, szddst, structAB, errMsg, dataObj, headObj) {
-  const msg = "抬头";
-  const msgTable = "，表[ " + structAB.tableName + " ]";
+  const msg = "[ " + structAB.tableName + " ]";
   for (let k = 0; k < ckItem.keys.length; k++) {
     const key = ckItem.keys[k];
     const fstVal = getFstDst(szddst[ckItem.tableCode][key], dataObj);
     if (fstVal === "2" && !headObj[key]) {
       const col = structAB.cols.find(r => r.fieldCode === key);
       const msgFName = col ? col.fieldName : key;
-      errMsg.push({ light: "1", retCode: "E", retMsg: msg + "字段[" + msgFName + " ]不能为空" + msgTable });
+      errMsg.push({ light: "1", retCode: "E", retMsg: msg + "字段[" + msgFName + " ]不能为空" });
     } else if (fstVal === "5") {
       if (headObj[key]) headObj[key] = undefined;
     }
@@ -248,15 +269,14 @@ function checkDataDstObjA(ckItem, szddst, structAB, errMsg, dataObj, headObj) {
 
 //行表检查
 function checkDataDstObjB(ckItem, szddst, structAB, errMsg, dataObj, row, itemNo) {
-  const msg = "行项目[第 " + itemNo + " 行]";
-  const msgTable = "，表[ " + structAB.tableName + " ]";
+  const msg = "[ " + structAB.tableName + " ]项目[第 " + itemNo + " 行]";
   for (let k = 0; k < ckItem.keys.length; k++) {
     const key = ckItem.keys[k];
     const fstVal = getFstDst(szddst[ckItem.tableCode][key], dataObj, row);
     if (fstVal === "2" && !row[key]) {
       const col = structAB.cols.find(r => r.fieldCode === key);
       const msgFName = col ? col.fieldName : key;
-      errMsg.push({ light: "1", retCode: "E", retMsg: msg + "字段[" + msgFName + " ]不能为空" + msgTable });
+      errMsg.push({ light: "1", retCode: "E", retMsg: msg + "字段[" + msgFName + " ]不能为空" });
     } else if (fstVal === "5") {
       if (row[key]) row[key] = undefined;
     }
@@ -282,15 +302,14 @@ function checkDataDstSubTable(ckItem, szddst, structAB, errMsg, dataObj, row, it
 
 //子表检查
 function checkDataDstObjC(ckItem, szddst, structC, errMsg, dataObj, row, rowSub, itemNo, itemSubNo) {
-  const msg = "子项目[第 " + itemNo + "," + itemSubNo + " 行]";
-  const msgTable = "，表[ " + structC.tableName + " ]";
+  const msg = "[ " + structC.tableName + " ]项目[第 " + itemNo + " / " + itemSubNo + " 行]";
   for (let k = 0; k < ckItem.keys.length; k++) {
     const key = ckItem.keys[k];
     const fstVal = getFstDst(szddst[ckItem.tableCode][key], dataObj, row, rowSub);
     if (fstVal === "2" && !rowSub[key]) {
       const col = structC.cols.find(r => r.fieldCode === key);
       const msgFName = col ? col.fieldName : key;
-      errMsg.push({ light: "1", retCode: "E", retMsg: msg + "字段[" + msgFName + " ]不能为空" + msgTable });
+      errMsg.push({ light: "1", retCode: "E", retMsg: msg + "字段[" + msgFName + " ]不能为空" });
     } else if (fstVal === "5") {
       if (rowSub[key]) rowSub[key] = undefined;
     }

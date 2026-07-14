@@ -5,25 +5,28 @@
       v-model="_modelValue"
       :options="_options"
       key="city"
-      placeholder=""
+      :placeholder="placeholder"
       :props="{ expandTrigger: 'hover', emitPath: false }"
-      :clearable="clearable"
       :show-all-levels="false"
       :disabled="_fst.disabled"
+      :clearable="clearable"
       @change="handleChange"
       popper-class="szd-el-cascader" />
   </div>
 </template>
 
 <script setup>
-  import { defineProps, defineEmits, computed, ref, onMounted } from "vue";
-  import { useStore } from "vuex";
+  import { computed, ref, onMounted } from "vue";
+  import store from "~store";
   import { getCityList } from "../api/searchHelpCity";
   import szdComp from "../../common/utils/component";
 
   const props = defineProps({
     modelValue: {
       type: [String, Number]
+    },
+    placeholder: {
+      type: String
     },
     disabled: {
       type: Boolean,
@@ -67,8 +70,6 @@
 
   //获取城市信息
   const getCity = () => {
-    //获取Vuex数据
-    const store = useStore();
     const vuexGroup = store.state.vuexData.group;
     if (vuexGroup && vuexGroup["$SZD_CITY"]) {
       _options.value = vuexGroup["$SZD_CITY"];

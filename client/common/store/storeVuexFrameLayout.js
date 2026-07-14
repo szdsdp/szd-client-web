@@ -6,7 +6,7 @@ const frameLayout = {
   namespaced: true,
   state: {
     sidebar: {
-      opened: !(Cookies.get(const_SidebarStatus) === 0)
+      opened: !(Cookies.get(const_SidebarStatus) == "0")
     },
     device: "desktop", //手机和pc端赋值
     theme: "#1890ff" //主题色
@@ -16,9 +16,9 @@ const frameLayout = {
     TOGGLE_SIDEBAR: state => {
       state.sidebar.opened = !state.sidebar.opened;
       if (state.sidebar.opened) {
-        Cookies.set(const_SidebarStatus, 1, { expires: 30 });
+        Cookies.set(const_SidebarStatus, "1", { expires: 30 });
       } else {
-        Cookies.set(const_SidebarStatus, 0, { expires: 30 });
+        Cookies.set(const_SidebarStatus, "0", { expires: 30 });
       }
     },
     //终端设备

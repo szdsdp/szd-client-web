@@ -32,8 +32,10 @@ const mutations = {
     if (view.path.substr(0, 7) === "/micro/") {
       const ls_route = setTabMeta(view.path);
       if (ls_route) {
+        view.meta.keepAlive = ls_route.meta.keepAlive;
+        view.meta.name = ls_route.meta.name;
+        view.meta.sysCodeWeb = ls_route.meta.sysCodeWeb;
         view.meta.title = ls_route.meta.title;
-        view.meta.name = ls_route.name;
       }
     }
     state.visitedViews.push(
@@ -121,6 +123,29 @@ const mutations = {
     }
   },
 
+  CLIENT_VISITED_VIEWS: (state, mircoData) => {
+    if (mircoData.event === "add" && mircoData.name) {
+      if (state.visitedViews.includes(mircoData.name)) return;
+      const routerObj = szdStoreSession.getCoreLogin().routesObj[mircoData.name];
+      if (routerObj && routerObj.sysCodeWeb === SYS_CODE) {
+        state.visitedViews.push(mircoData.name);
+      }
+    } else if (mircoData.event === "closeSelf") {
+      const index = state.visitedViews.indexOf(mircoData.name);
+      if (index > -1) {
+        state.visitedViews.splice(index, 1);
+      }
+    } else if (mircoData.event === "closeOther") {
+      const index = state.visitedViews.indexOf(mircoData.name);
+      if (index > -1) {
+        state.visitedViews = state.visitedViews.slice(index, index + 1);
+      } else {
+        state.visitedViews = [];
+      }
+    } else if (mircoData.event === "closeAll") {
+      state.visitedViews = [];
+    }
+  },
   CLIENT_CACHED_VIEWS: (state, mircoData) => {
     if (mircoData.event === "add" && mircoData.name) {
       if (state.cachedViews.includes(mircoData.name)) return;
@@ -161,7 +186,6 @@ const actions = {
     return new Promise(resolve => {
       dispatch("delVisitedView", view);
       dispatch("delCachedView", view);
-
       resolve({
         visitedViews: [...state.visitedViews],
         cachedViews: [...state.cachedViews]
@@ -234,8 +258,12 @@ const actions = {
   //core 通知微应用
   clientNavTab({ commit, state }, mircoData) {
     return new Promise(resolve => {
+      commit("CLIENT_VISITED_VIEWS", mircoData);
       commit("CLIENT_CACHED_VIEWS", mircoData);
-      resolve([...state.cachedViews]);
+      resolve({
+        visitedViews: [...state.visitedViews],
+        cachedViews: [...state.cachedViews]
+      });
     });
   }
 };
@@ -245,7 +273,7 @@ function setTabMeta(path) {
   let ls_route = undefined;
   const routesObj = store.state.loginUser.routesObj;
   for (let key in routesObj) {
-    if (routesObj[key].path === path.toLowerCase()) {
+    if (routesObj[key].path.toLowerCase() === path.toLowerCase()) {
       ls_route = routesObj[key];
       break;
     }

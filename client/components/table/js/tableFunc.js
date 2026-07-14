@@ -24,15 +24,24 @@ export function dataAdd(dataObj, fCatUse) {
 }
 
 //赋值行
-export function dataCopy(dataObj, refTable) {
-  const _listSel = refTable.value.getSelectionRows();
-  if (_listSel.length === 0) {
+export function dataCopy(dataObj, fCatUse, listSel) {
+  if (listSel.length === 0) {
     $m("CORE_CLIENT.E047"); //请至少选择一行需要复制的行
     return false;
   }
   let rowIndex = dataObj.value.length;
-  for (let i = 0; i < _listSel.length; i++) {
-    let _row = _.cloneDeep(_listSel[i]);
+  const catKeys = Object.keys(fCatUse);
+  for (let i = 0; i < listSel.length; i++) {
+    let _rowTemp = _.cloneDeep(listSel[i]);
+    let _row = {};
+    for (let i = 0; i < catKeys.length; i++) {
+      const item = fCatUse[catKeys[i]];
+      if (!item.noCopy && _rowTemp[item.field]) {
+        _row[item.field] = _rowTemp[item.field];
+      } else {
+        _row[item.field] = item.type === "number" ? 0 : "";
+      }
+    }
     dataObj.value.push(_row);
   }
   //返回回调参数
@@ -40,20 +49,19 @@ export function dataCopy(dataObj, refTable) {
 }
 
 //删除行
-export function dataDel(dataObj, refTable) {
-  const _listSel = refTable.value.getSelectionRows();
-  if (_listSel.length === 0) {
+export function dataDel(dataObj, listSel) {
+  if (listSel.length === 0) {
     $m("CORE_CLIENT.E048"); //请至少选择一行需要删除的行
     return false;
   }
-  let _rows = _.cloneDeep(_listSel);
-  dataObj.value = dataObj.value.filter(item => !_listSel.some(ele => ele === item));
+  let _rows = _.cloneDeep(listSel);
+  dataObj.value = dataObj.value.filter(item => !listSel.some(ele => ele === item));
   //返回回调参数
   return { rows: _rows };
 }
 
 //数据行合计
-export function dataSum(obj, fCatCol) {
+export function dataSum(obj, fCatCol, showSumCol = 0) {
   //需要汇总的列
   let sum_cats = {};
   dataSumField(fCatCol, sum_cats);
@@ -61,7 +69,12 @@ export function dataSum(obj, fCatCol) {
     return [];
   }
   //数据行
-  let l_row_len = obj.data.length;
+  let calData = [];
+  for (let i = 0; i < obj.data.length; i++) {
+    if (obj.data[i]["$SZDRowHide"] === true) continue; //隐藏行不计算
+    calData.push(obj.data[i]);
+  }
+  let l_row_len = calData.length;
   if (l_row_len === 0) {
     return [];
   }
@@ -80,7 +93,7 @@ export function dataSum(obj, fCatCol) {
       l_sum_cat = sum_cats[l_prop];
       if (!l_sum_cat) l_sum_cat = {};
     }
-    if (i === 0 && !l_sum_cat.doSum) {
+    if (i === showSumCol && !l_sum_cat.doSum) {
       sums[i] = "总计";
       continue;
     }
@@ -93,7 +106,7 @@ export function dataSum(obj, fCatCol) {
     sums[i] = 0;
     //汇总列值
     for (let j = 0; j < l_row_len; j++) {
-      let l_val = obj.data[j][l_prop];
+      let l_val = calData[j][l_prop];
       //列汇总 0.不汇总 1.合计 2.平均值 3.最小值 4.最大值 5.统计行数
       if (l_sum_cat.doSum === "1" || l_sum_cat.doSum === "2") {
         if (l_val === "" || l_val === null || l_val === undefined) {

@@ -11,7 +11,7 @@
         :style="activeStyle(tag)"
         @click.middle.native="!isAffix(tag) ? closeSelectedTag(tag) : ''"
         @contextmenu.prevent.native="openMenu(tag, $event)">
-        <el-icon v-if="tag.title === '首页'" :class="{ 'el-icon-s-home': tag.title === '首页' }">
+        <el-icon v-if="tag.name === 'home'" :class="{ 'el-icon-s-home': tag.name === 'home' }">
           <HomeFilled />
         </el-icon>
         <span v-else> {{ tag.title }} </span>
@@ -22,10 +22,10 @@
     </div>
 
     <ul v-show="tagMenu.visible" :style="{ left: tagMenu.left + 'px', top: tagMenu.top + 'px' }" class="contextmenu">
-      <!-- <li @click="refreshSelectedTag(selectedTag)">刷新页面</li> -->
-      <li v-if="!isAffix(selectedTag)" @click="closeSelectedTag(selectedTag)">关闭当前</li>
-      <li @click="closeOthersTags(selectedTag)">关闭其他</li>
-      <li v-if="!isAffix(selectedTag)" @click="closeAllTags(selectedTag)">关闭所有</li>
+      <!-- <li @click="refreshSelectedTag(selectedTag)">{{ $t("刷新页面")}}</li> -->
+      <li v-if="!isAffix(selectedTag)" @click="closeSelectedTag(selectedTag)">{{ $t("关闭当前") }}</li>
+      <li @click="closeOthersTags(selectedTag)">{{ $t("关闭其他") }}</li>
+      <li v-if="!isAffix(selectedTag)" @click="closeAllTags(selectedTag)">{{ $t("关闭所有") }}</li>
     </ul>
   </div>
 </template>
@@ -36,6 +36,7 @@
   import path from "path";
   import store from "~store";
   import { useRoute } from "vue-router";
+  import { $t } from "../../../client/common/utils/globalConfig";
 
   const { proxy } = getCurrentInstance();
 
@@ -58,6 +59,8 @@
   const visitedViews = computed(() => {
     return store.state.frameTag.visitedViews;
   });
+  //路由变化监听判断重复
+  const currentRoutePath = ref("");
 
   onMounted(() => {
     initTags();
@@ -68,8 +71,11 @@
   watch(
     () => currentRoute.path,
     () => {
-      addTags();
-      moveToCurrentTag();
+      if (currentRoutePath.value !== currentRoute.path) {
+        currentRoutePath.value = currentRoute.path;
+        addTags();
+        moveToCurrentTag();
+      }
     },
     { deep: true }
   );

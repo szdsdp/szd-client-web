@@ -9,12 +9,14 @@ export default {
     const elDialog = el.parentNode.parentNode;
     //设置窗口大小
     const size = binding.value;
-    // 判断是不是百分数
-    const isWidthPercent = size[0].toString().includes("%");
-    const isHeightPercent = size[1].toString().includes("%");
+    let _wh = {
+      width: size[0] ? size[0] : 1000,
+      height: size[1] ? size[1] : 600
+    };
+    if (!_wh.width.toString().includes("%")) _wh.width = _wh.width + "px";
+    if (!_wh.height.toString().includes("%")) _wh.height = _wh.height + "px";
     if (elDialog) {
-      elDialog.style.cssText = `--el-dialog-width: ${isWidthPercent ? size[0] : size[0] + "px"};
-            height:${isHeightPercent ? size[1] : size[1] + "px"}`;
+      elDialog.style.cssText = `--el-dialog-width: ${_wh.width}; height:${_wh.height}`;
     }
 
     //计算弹窗最大层级

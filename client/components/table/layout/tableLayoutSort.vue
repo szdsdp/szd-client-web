@@ -58,7 +58,7 @@
 <script setup>
   import "../css/table.scss";
   import { $t } from "../../../common/utils/globalConfig";
-  import { computed, defineEmits, defineProps, onMounted } from "vue";
+  import { computed, onMounted } from "vue";
   import Sortable from "sortablejs";
   //回调事件
   const emit = defineEmits(["update:sortObj"]);

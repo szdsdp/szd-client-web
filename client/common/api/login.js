@@ -7,7 +7,8 @@ export function login(obj) {
     userId: obj.userId.trim(), //用户登录id
     password: obj.password, //用户密码
     code: obj.code, //验证码
-    uuid: obj.uuid //验证码对应后端uuid
+    uuid: obj.uuid, //验证码对应后端uuid
+    appOpenUuid: obj.appOpenUuid || "" //三方系统绑定uuid
   };
   return request({
     url: "/core/login",
@@ -50,11 +51,12 @@ export function getSmsCode(param) {
 }
 
 // 短信登录方法
-export function loginSms(userId, code, uuid) {
+export function loginSms(obj) {
   const data = {
-    userId, //用户手机号
-    code, //验证码
-    uuid //验证码对应后端uuid
+    userId: obj.phone, //用户手机号
+    code: obj.code, //验证码
+    uuid: obj.uuid, //验证码对应后端uuid
+    appOpenUuid: obj.appOpenUuid || "" //三方系统绑定uuid
   };
   return request({
     url: "/core/login/sms",
@@ -72,6 +74,7 @@ export function loginOthers(userId) {
 }
 
 // 外围系统功能穿透-用户登录
+// 返回：{token:"", userId:'', appOpenUuid:'',  routerCode:'', params:{}}
 export function ssoLogin(data = {}) {
   return request({
     url: "/core/login/sso",
@@ -148,6 +151,14 @@ export function getDict() {
 export function getMsg() {
   return request({
     url: "/core/dev/msg/download",
+    method: "get"
+  });
+}
+
+// 获取白名单
+export function getWhiteList() {
+  return requestNoLoading({
+    url: "/core/dev/whitelist/pc",
     method: "get"
   });
 }

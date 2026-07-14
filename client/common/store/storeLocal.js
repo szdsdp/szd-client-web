@@ -110,37 +110,19 @@ function setMsgMd5(val) {
 }
 
 /*************************************************
- * dev开发参数设置
- */
-
-/** dev */
-const szdDev = "szdDev";
-
-/** 获取dev */
-function getDev() {
-  const dbDev = localStorage.getItem(szdDev);
-  return dbDev ? JSON.parse(dbDev) : {};
-}
-
-/** 设置dev */
-function setDev(val) {
-  localStorage.setItem(szdDev, JSON.stringify(val));
-}
-
-/*************************************************
  * 登录用户
  */
 
 /** dev */
 const szdUserId = "szdUserId";
 
-/** 获取dev */
+/** 获取登录用户 */
 function getUserId() {
   const userId = localStorage.getItem(szdUserId);
   return userId;
 }
 
-/** 设置dev */
+/** 设置登录用户 */
 function setUserId(val) {
   localStorage.setItem(szdUserId, val);
 }
@@ -162,8 +144,6 @@ const szdStoreLocal = {
   setMsg,
   getMsgMd5,
   setMsgMd5,
-  getDev,
-  setDev,
   getUserId,
   setUserId
 };

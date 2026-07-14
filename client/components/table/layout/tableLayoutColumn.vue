@@ -19,7 +19,17 @@
           <el-checkbox v-model="scope.row.hide" />
         </template>
       </el-table-column>
-      <el-table-column v-if="props.lay.layout.showSummary" prop="doSum" :label="$t('合计规则')" min-width="100">
+      <el-table-column v-if="!expLay" prop="width" :label="$t('宽度')" min-width="120" align="center">
+        <template #default="scope">
+          <szd-input-number v-model="scope.row.width" clearable :min="0" />
+        </template>
+      </el-table-column>
+      <el-table-column v-if="!expLay" prop="minWidth" :label="$t('最小宽度')" min-width="120" align="center">
+        <template #default="scope">
+          <szd-input-number v-model="scope.row.minWidth" clearable :min="0" />
+        </template>
+      </el-table-column>
+      <el-table-column v-if="!expLay && props.lay.layout.showSummary" prop="doSum" :label="$t('合计规则')" min-width="100">
         <template #default="scope">
           <template v-if="!scope.row.children">
             <szd-select
@@ -47,7 +57,7 @@
           </template>
         </template>
       </el-table-column>
-      <el-table-column prop="fixed" :label="$t('固定')" min-width="100">
+      <el-table-column v-if="!expLay" prop="fixed" :label="$t('固定')" min-width="100">
         <template #default="scope">
           <template v-if="!scope.row.children && !scope.row.$SZDParent">
             <szd-select
@@ -60,7 +70,7 @@
           </template>
         </template>
       </el-table-column>
-      <el-table-column prop="align" :label="$t('对齐方式')" min-width="100">
+      <el-table-column v-if="!expLay" prop="align" :label="$t('对齐方式')" min-width="100">
         <template #default="scope">
           <template v-if="!scope.row.children">
             <szd-select
@@ -74,13 +84,18 @@
           </template>
         </template>
       </el-table-column>
+      <el-table-column prop="exportSplit" :label="$t('导出分割符')" min-width="120" align="center">
+        <template #default="scope">
+          <szd-input v-model="scope.row.exportSplit" clearable />
+        </template>
+      </el-table-column>
       <el-table-column prop="field" :label="$t('列代码')" min-width="100" />
     </el-table>
   </div>
 </template>
 
 <script setup>
-  import { defineProps, computed, onMounted, ref, defineEmits } from "vue";
+  import { computed, onMounted, ref } from "vue";
   import { $m, $t } from "../../../common/utils/globalConfig";
   import Sortable from "sortablejs";
   import { setColCatPos } from "../js/tableLayout";
@@ -93,6 +108,10 @@
     },
     colCat: {
       type: Array
+    },
+    expLay: {
+      type: Boolean,
+      default: false
     }
   });
   //同步数据-列设置

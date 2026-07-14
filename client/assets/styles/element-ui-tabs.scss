@@ -11,11 +11,16 @@
 .el-tabs--card > .el-tabs__header .el-tabs__nav {
   border-radius: 2px 2px 0 0;
 }
-.el-tabs--card>.el-tabs__header{
+
+.el-tabs--card > .el-tabs__header {
   height: 32px;
 }
 
-.el-tabs__new-tab{
+.el-tabs__header {
+  margin-bottom: 10px;
+}
+
+.el-tabs__new-tab {
   margin: 4px 0 0 0;
 }
 

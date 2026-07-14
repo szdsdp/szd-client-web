@@ -9,19 +9,19 @@
         </div>
         <div>
           <el-checkbox-group v-model="_modelValue" :disabled="_fst.disabled" :min="min" :max="max" @change="handleChange">
-            <el-checkbox v-for="item in _options" :value="item.svalue" :label="item.svalue">{{ item.sname }} </el-checkbox>
+            <el-checkbox v-for="item in _options" :value="item.svalue">{{ item.sname }}</el-checkbox>
           </el-checkbox-group>
         </div>
       </div>
     </template>
     <template v-else>
-      <el-checkbox v-model="_modelValue" :label="boxLabel" :disabled="_fst.disabled" @change="handleChange" />
+      <el-checkbox v-model="_modelValue" :label="$t(boxLabel)" :disabled="_fst.disabled" @change="handleChange" />
     </template>
   </template>
 </template>
 <script setup>
-  import { defineProps, defineEmits, computed, onMounted, ref, watch } from "vue";
-  import { useStore } from "vuex";
+  import { computed, onMounted, ref, watch } from "vue";
+  import store from "~store";
   import { selectBaseView } from "../api/selectOption";
   import szdStoreLocal from "../../common/store/storeLocal";
   import { $t } from "../../common/utils/globalConfig";
@@ -135,17 +135,18 @@
     const localDict = szdStoreLocal.getDict();
     if (localDict && localDict[baseField]) {
       _options.value = localDict[baseField];
+      setIndeterminate();
     } else {
-      //获取Vuex数据
-      const store = useStore();
       const vuexBase = store.state.vuexData.dict;
       if (vuexBase && vuexBase[baseField]) {
         _options.value = vuexBase[baseField];
+        setIndeterminate();
       } else {
         //获取实时数据
         selectBaseView({ baseField: baseField, _paramGroup: [] }).then(res => {
           if (res.code === 200) {
             _options.value = res.data;
+            setIndeterminate();
             //Vuex存储数据
             store.dispatch("setVuexDataDict", { baseField: baseField, options: _options.value });
           } else {
@@ -156,13 +157,20 @@
     }
   };
 
+  //设置全选标识
+  const setIndeterminate = () => {
+    if (_checkboxGroup.value) {
+      setTimeout(() => {
+        const count = _modelValue.value.length;
+        _checkAll.value = count === _options.value.length;
+        _isIndeterminate.value = count > 0 && count < _options.value.length;
+      });
+    }
+  };
+
   //更改事件
   const handleChange = v => {
-    if (_checkboxGroup) {
-      const count = v.length;
-      _checkAll.value = count === _options.value.length;
-      _isIndeterminate.value = count > 0 && count < _options.value.length;
-    }
+    setIndeterminate();
     emit("change", v);
   };
 

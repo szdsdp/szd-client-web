@@ -13,7 +13,7 @@
             @dblclick="emit('dblclick')"
             :szdfst="szdfst" />
         </el-col>
-        <el-col :span="descSpan">
+        <el-col :span="descSpan" style="align-content: center">
           <szd-desc v-model="_desc" />
         </el-col>
       </el-row>
@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-  import { defineProps, defineEmits, computed } from "vue";
+  import { computed } from "vue";
   import szdComp from "../../common/utils/component";
 
   const props = defineProps({

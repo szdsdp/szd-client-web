@@ -1,5 +1,8 @@
 //区域
 import area from "./area/area.vue";
+import areaCtrl from "./area/areaCtrl.vue";
+import areaFormItem from "./area/areaFormItem.vue";
+import areaFormItemCol from "./area/areaFormItemCol.vue";
 //描述
 import desc from "./desc/desc.vue";
 //小数位和千分位符
@@ -82,9 +85,19 @@ import ifr from "./ifr/ifr.vue";
 import szdEditor from "./editor/editor.vue";
 //文件预览
 import fileView from "./fileView/fileView.vue";
+//文件上传
+import uploadView from "./upload/uploadView.vue";
+import uploadViewCtrl from "./upload/uploadViewCtrl.vue";
+import uploadViewFormItem from "./upload/uploadViewFormItem.vue";
+import uploadViewFormItemCol from "./upload/uploadViewFormItemCol.vue";
+//交通灯
+import light from "./light/light.vue";
 
 const installComponent = app => {
   app.component("szd-area", area);
+  app.component("szd-area-ctrl", areaCtrl);
+  app.component("szd-area-form-item", areaFormItem);
+  app.component("szd-area-form-item-col", areaFormItemCol);
   app.component("szd-desc", desc);
   app.component("szd-dot", dot);
   app.component("szd-hlt", hlt);
@@ -143,5 +156,10 @@ const installComponent = app => {
   app.component("szd-ifr", ifr);
   app.component("szd-editor", szdEditor);
   app.component("szd-file-view", fileView);
+  app.component("szd-upload-view", uploadView);
+  app.component("szd-upload-view-ctrl", uploadViewCtrl);
+  app.component("szd-upload-view-form-item", uploadViewFormItem);
+  app.component("szd-upload-view-form-item-col", uploadViewFormItemCol);
+  app.component("szd-light", light);
 };
 export default installComponent;

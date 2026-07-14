@@ -8,7 +8,7 @@
     align-center
     destroy-on-close
     draggable>
-    <div v-szd-dialog="[1200, 650]" />
+    <div v-szd-dialog="['75%', '75%']" />
     <!-- 页标签信息 -->
     <el-tabs v-model="dg.actTab1" type="border-card">
       <!-- 管理布局 -->
@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-  import { computed, defineEmits, defineExpose, defineProps, nextTick, ref } from "vue";
+  import { computed, nextTick, ref } from "vue";
   import { $m, $t } from "../../../common/utils/globalConfig";
   import { getVarList, saveVariant } from "../../api/statistics";
   import { checkLayData, initDataLayout, setLayVar, setSelData } from "../js/statsLayout";

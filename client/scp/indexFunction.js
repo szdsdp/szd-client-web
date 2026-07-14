@@ -4,6 +4,7 @@ import { setItemNo } from "./js/scpSetItemNo";
 import { setMove } from "./js/scpMpMove";
 import { checkData, checkDataDst } from "./js/scpCheckData";
 import { getFst, getFstBtn, setFstCellRows, setFstCellData } from "./js/scpFstField";
+import setScpTableMaintain, { szdScpTableMaintain } from "./scpTableMaintain/scpTableMaintain";
 
 export const szdScp = {
   c_field_preSubTable,
@@ -20,8 +21,11 @@ export const szdScp = {
 };
 
 const installScpFunction = app => {
-  /** 零代码区域 **/
+  //零代码区域
   app.config.globalProperties.szdScp = szdScp;
+  //表维护
+  setScpTableMaintain(app);
+  app.config.globalProperties.szdScpTableMaintain = szdScpTableMaintain;
 };
 
 export default installScpFunction;

@@ -2,9 +2,10 @@
   <el-dialog
     style="max-height: 90%"
     id="shDialog"
-    :title="winParams.pcTitle"
+    :title="winParams.title"
     v-model="winParams.open"
     append-to-body
+    :close-on-click-modal="false"
     class="app-dialog-container"
     @close="closeDialog('cancel')"
     align-center
@@ -19,22 +20,55 @@
     </div>
 
     <!-- 查询条件 -->
-    <el-form class="app-el-form" v-if="selectParams.length > 0">
+    <el-form class="app-el-form" v-if="selectParams.length > 0" @submit.native.prevent>
       <el-row>
         <!-- 查询条件列数winParams.pcSelectCol 循环输出查询条件 更多筛选winParams.advancedSearch = 0仅显示第一行-->
         <template v-for="(item, index) in selectParams" :key="index">
           <el-col :span="24 / Number(winParams.pcSelectCol)" v-if="winParams.advancedSearch === 0 ? index < winParams.pcSelectCol : true">
-            <!-- 基础字段下拉 -->
-            <el-form-item v-if="item.fieldHelpType === 'B'" :label="item.fieldName">
-              <szd-select v-model="item.fieldVal" :baseField="item.fieldHelpCode" :disabled="item.fieldDisplay" @keyup.enter.native="getSearch" />
-            </el-form-item>
-            <!-- 基础字段帮助 -->
-            <el-form-item v-else :label="item.fieldName">
-              <szd-input
+            <el-form-item :label="$t(item.fieldName)">
+              <!-- 基础字段下拉 -->
+              <szd-select
+                v-if="item.fieldHelpType === 'B'"
+                v-model="item.fieldVal"
+                :baseField="item.fieldHelpCode"
+                :disabled="item.fieldDisplay"
+                clearable
+                @keyup.enter="getSearch" />
+              <!-- 日期和日期时间 -->
+              <szd-date
+                v-else-if="['date', 'datetime'].includes(item.fieldDataType)"
+                v-model="item.fieldVal"
+                :type="item.fieldDataType"
+                :disabled="item.fieldDisplay"
+                clearable
+                @keyup.enter="getSearch" />
+              <!-- 时间 -->
+              <szd-time
+                v-else-if="item.fieldDataType === 'time'"
                 v-model="item.fieldVal"
                 :disabled="item.fieldDisplay"
+                clearable
+                @keyup.enter="getSearch" />
+              <!-- 基础字段帮助 -->
+              <szd-radio
+                v-else-if="item.fieldDataType === 'boolean'"
+                v-model="item.fieldVal"
+                :baseArr="[
+                  { svalue: 'A', sname: $t('全部') },
+                  { svalue: '1', sname: $t('是') },
+                  { svalue: '0', sname: $t('否') }
+                ]"
+                :disabled="item.fieldDisplay"
+                @keyup.enter="getSearch" />
+              <!-- 基础字段帮助 -->
+              <szd-input
+                v-else
+                v-model="item.fieldVal"
+                :type="item.fieldDataType"
+                :disabled="item.fieldDisplay"
                 :show-help="item.fieldHelpType === 'A' && item.fieldHelpCode"
-                @help="szdSh({ a: item.fieldHelpCode, b: item, c: ['fieldVal-' + item.fieldHelpMap] })"
+                @help="szdSh({ a: item.fieldHelpCode, b: item, c: ['fieldVal-' + item.fieldHelpMap], f: item.fieldMode === 'IN' ? 6 : 1 })"
+                clearable
                 @keyup.enter="getSearch" />
             </el-form-item>
           </el-col>
@@ -42,27 +76,34 @@
       </el-row>
     </el-form>
 
-    <!-- 页标签 和 查询按钮 无常用值 winParams.pcCommonFlag 且无查询条件selectParams.length 不输出-->
-    <el-row class="tabBox" v-if="winParams.pcCommonFlag || selectParams.length > 0">
+    <!-- 页标签 和 查询按钮 无常用值 winParams.commonFlag 且无查询条件selectParams.length 不输出-->
+    <el-row class="tabBox" v-if="winParams.commonFlag || selectParams.length > 0">
       <!-- 页标签设置 -->
       <el-col :span="12" class="tabBoxCol">
-        <div style="display: flex" v-if="winParams.pcCommonFlag">
+        <div style="display: flex" v-if="winParams.commonFlag">
           <div class="tabBoxTab" :style="{ color: tabStyle.allFontColor }" @click="setTab(0)">{{ $t("所有值") }}</div>
           <div class="tabBoxTab" :style="{ color: tabStyle.comFontColor }" @click="setTab(1)">{{ $t("常用值") }}</div>
           <div class="tabBoxLine" :style="{ left: tabStyle.left }" />
         </div>
       </el-col>
       <!-- 查询按钮设置 selectParams.length<pcSelectCol 查询条件小于列数，不输出更多筛选 -->
-      <el-col :span="12" class="searchBox" v-if="selectParams.length > 0">
-        <szd-button label="搜索" type="primary" icon="Search" @click="getSearch" />
-        <szd-button label="同步" type="primary" icon="Sort" @click="getSync" v-if="winParams.pcJobCode" />
-        <szd-button label="重置" type="primary" icon="Refresh" @click="setReset" />
-        <szd-button label="更多筛选" type="primary" icon="DCaret" @click="setAdvancedSearch" v-if="selectParams.length > winParams.pcSelectCol" />
+      <el-col :span="12" class="searchBox" v-if="selectParams.length > 0 || winParams.jobCode">
+        <szd-button v-if="selectParams.length > 0" label="搜索" type="primary" icon="Search" @click="getSearch" />
+        <szd-button v-if="selectParams.length > 0" label="重置" type="primary" icon="Refresh" @click="setReset" />
+        <szd-button v-if="winParams.jobCode" label="同步" type="primary" icon="Sort" @click="getSync" />
+        <szd-button v-if="selectParams.length > winParams.pcSelectCol" label="更多筛选" type="primary" icon="DCaret" @click="setAdvancedSearch" />
       </el-col>
     </el-row>
 
     <!-- 数据输出 单元格双击事件 复选选择事件 排序事件 -->
-    <el-table stripe border :data="tableData" @cell-dblclick="handCellDblclick" @selection-change="handleSelectionChange" @sort-change="handleSort">
+    <el-table
+      stripe
+      border
+      ref="refSearchHelpTable"
+      :data="tableData"
+      @cell-dblclick="handCellDblclick"
+      @selection-change="handleSelectionChange"
+      @sort-change="handleSort">
       <!-- 复选框 -->
       <el-table-column v-if="winParams.multipleChoice === 2" type="selection" align="center" width="55" />
       <!-- 数据列 -->
@@ -71,11 +112,11 @@
         :key="index"
         :prop="item.fieldId"
         :label="$t(item.fieldName)"
-        :width="item.fieldColWidth"
+        :min-width="item.fieldColWidthPc"
         :align="item.fieldColAlign"
         :sortable="item.fieldColSort" />
-      <!-- 操作列输出 无常用值winParams.pcCommonFlag不输出 添加常用之winParams.activeTab===0 -->
-      <el-table-column v-if="winParams.pcCommonFlag" :label="$t('操作')" align="center">
+      <!-- 操作列输出 无常用值winParams.commonFlag不输出 添加常用之winParams.activeTab===0 -->
+      <el-table-column v-if="winParams.commonFlag" :label="$t('操作')" align="center">
         <template v-slot="scope">
           <!-- 添加常用winParams.activeTab===0 -->
           <szd-button
@@ -96,11 +137,12 @@
       <div class="main-button">
         <div class="main-button-left" style="width: 70%">
           <szd-pagination
+            v-if="!winParams.noPage"
             position="left"
-            :total="winParams.total"
-            v-model:page="winParams.pageNum"
-            :page-sizes="winParams.pageSizes"
-            v-model:limit="winParams.pageSize"
+            :total="page.total"
+            v-model:page="page.pageNum"
+            :page-sizes="page.pageSizes"
+            v-model:limit="page.pageSize"
             @pagination="getSelectParams" />
         </div>
         <div class="main-button-right" style="width: 30%">
@@ -115,6 +157,7 @@
   import { searchHelpList, addCommonValues, delCommonValues, syncMdm } from "../api/searchHelp.js";
 
   export default {
+    props: ["selectKeys"],
     data() {
       return {
         //URL参数传入
@@ -131,27 +174,29 @@
         //窗口大小和参数
         winParams: {
           open: false,
-          total: 0, //总条数
-          pageSizes: [], //分页大小
-          pageSize: 20, //页大小
-          pageNum: 1, //当前页
-
           activeTab: 0, //0所有值 1常用值
           advancedSearch: 0, //更多查询条件
 
           activeTabGroup: "", //集标签
           multipleChoice: 1, //单选多选
-          pcTitle: "搜索帮助", //窗口标题
+          title: "搜索帮助", //窗口标题
           pcWidth: 1000, //窗口宽度
           pcHeight: 600, //窗口高度
           pcSelectCol: 2, //查询列
-          pcCommonFlag: true, //显示常用值
-          pcUrlCus: "", //自定义后端请求
-          pcJobCode: "", //同步接口程序
-
+          commonFlag: true, //显示常用值
+          noPage: false, //不启用分页
+          urlCus: "", //自定义后端请求
+          jobCode: "", //同步接口程序
           groupFlag: false, //帮助集
-
-          baseField: "" //基础字段
+          baseField: "", //基础字段
+          baseFixComFieldArr: [] //固定常用值字段
+        },
+        //页设置
+        page: {
+          total: 0, //总条数
+          pageSizes: [], //分页大小
+          pageSize: 20, //页大小
+          pageNum: 1 //当前页
         },
         //排序列
         sortGroup: [
@@ -188,59 +233,81 @@
         //窗口样式
         this.setStyles(this.objHelp.header);
         //设置查询条件
-        this.setSelectParams(this.objHelp.pcFilter);
+        this.setSelectParams(this.objHelp.filter);
         //设置表头列
-        this.setColumnParams(this.objHelp.pcOutput);
+        this.setColumnParams(this.objHelp.output);
+        //设置固定常用值字段
+        this.setBaseFixComFieldArr(this.objHelp.filter);
         //获取后台数据
         this.getSelectParams();
         this.winParams.open = true;
       },
       //设置窗口样式
       setStyles(header) {
-        if (Array.isArray(header.pcPageSizes) && header.pcPageSizes.length > 0) {
-          this.winParams.pageSizes = JSON.parse(header.pcPageSizes);
+        if (header.pcPageSizes) {
+          try {
+            this.page.pageSizes = JSON.parse(header.pcPageSizes);
+            if (!Array.isArray(this.page.pageSizes) || this.page.pageSizes.length === 0) {
+              this.page.pageSizes = [20, 50, 200, 500];
+            }
+          } catch (e) {
+            this.page.pageSizes = [20, 50, 200, 500];
+          }
         } else {
-          this.winParams.pageSizes = [20, 50, 200, 500];
+          this.page.pageSizes = [20, 50, 200, 500];
         }
-        this.winParams.pageSize = this.winParams.pageSizes[0];
-        this.winParams.pageNum = 1;
+        this.page.pageSize = this.page.pageSizes[0];
+        this.page.pageNum = 1;
 
         this.winParams.pcSelectCol = header.pcSelectCol ? header.pcSelectCol : 2; //查询列
-        this.winParams.pcCommonFlag = header.pcCommonFlag; //显示常用值
-        this.winParams.pcUrlCus = header.pcUrlCus; //自定义后端请求
-        this.winParams.pcJobCode = header.pcJobCode; //同步接口程序
+        this.winParams.commonFlag = header.commonFlag; //显示常用值
+        this.winParams.noPage = header.noPage === true; //不启用分页
+        this.winParams.urlCus = header.urlCus; //自定义后端请求
+        this.winParams.jobCode = header.jobCode; //同步接口程序
         this.retParam.defFieldId = ""; //默认回填字段代码
       },
       //设置查询条件
-      setSelectParams(pcFilter) {
+      setSelectParams(filter) {
         this.selectParams = [];
-        for (let i = 0; i < pcFilter.length; i++) {
+        for (let i = 0; i < filter.length; i++) {
+          let _fieldVal = filter[i].fieldVal ? filter[i].fieldVal : "";
+          if (filter[i].fieldDataType === "boolean") {
+            if (filter[i].fieldVal === true || filter[i].fieldVal === "true") {
+              _fieldVal = "1";
+            } else if (filter[i].fieldVal === false || filter[i].fieldVal === "false") {
+              _fieldVal = "0";
+            } else {
+              _fieldVal = "A";
+            }
+          }
           this.selectParams.push({
-            fieldId: pcFilter[i].fieldId,
-            fieldName: pcFilter[i].fieldName,
-            fieldVal: pcFilter[i].fieldVal ? pcFilter[i].fieldVal : "",
-            fieldMode: pcFilter[i].fieldMode,
-            fieldDisplay: pcFilter[i].fieldDisplay,
-            fieldHelpType: pcFilter[i].fieldHelpType,
-            fieldHelpCode: pcFilter[i].fieldHelpCode,
-            fieldHelpMap: pcFilter[i].fieldHelpMap
+            fieldId: filter[i].fieldId,
+            fieldName: filter[i].fieldName,
+            fieldVal: _fieldVal,
+            fieldDataType: filter[i].fieldDataType,
+            fieldMode: filter[i].fieldMode,
+            fieldDisplay: filter[i].fieldDisplay,
+            fieldHelpType: filter[i].fieldHelpType,
+            fieldHelpCode: filter[i].fieldHelpCode,
+            fieldHelpMap: filter[i].fieldHelpMap
           });
         }
       },
       //设置表列头赋值
-      setColumnParams(pcOutput) {
+      setColumnParams(output) {
         this.columnParams = [];
-        for (let i = 0; i < pcOutput.length; i++) {
-          if (pcOutput[i].fieldRetDef) {
-            this.retParam.defFieldId = pcOutput[i].fieldId; //默认回填
+        for (let i = 0; i < output.length; i++) {
+          if (output[i].fieldRetDef) {
+            this.retParam.defFieldId = output[i].fieldId; //默认回填
           }
-          if (!pcOutput[i].fieldColHide) {
+          if (!output[i].fieldColHide) {
             this.columnParams.push({
-              fieldId: pcOutput[i].fieldId,
-              fieldName: pcOutput[i].fieldName,
-              fieldColWidth: pcOutput[i].fieldColWidth ? pcOutput[i].fieldColWidth : "", //列宽度
-              fieldColAlign: pcOutput[i].fieldColAlign ? pcOutput[i].fieldColAlign : "", //对齐方式
-              fieldColSort: pcOutput[i].fieldColSort //排序
+              fieldId: output[i].fieldId,
+              fieldName: output[i].fieldName,
+              fieldColWidthPc: output[i].fieldColWidthPc ? output[i].fieldColWidthPc : "", //列宽度
+              fieldColAlign: output[i].fieldColAlign ? output[i].fieldColAlign : "", //对齐方式
+              fieldColDetail: output[i].fieldColDetail ? output[i].fieldColDetail : false, //是否详情
+              fieldColSort: output[i].fieldColSort //排序
             });
           }
           if (!this.retParam.defFieldId && this.columnParams.length > 0) {
@@ -248,23 +315,36 @@
           }
         }
       },
+      //设置固定常用值字段
+      setBaseFixComFieldArr(filter) {
+        this.winParams.baseFixComFieldArr = [];
+        for (let i = 0; i < filter.length; i++) {
+          if (filter[i].fieldFixComWhere === true) this.winParams.baseFixComFieldArr.push(filter[i].fieldId);
+        }
+        if (this.winParams.baseFixComFieldArr.length > 0) this.winParams.baseFixComFieldArr.sort((a, b) => a - b);
+      },
 
       /**************从后台获取数据列表******************/
       //后台查询数据-获取查询条件参数
       getSelectParams() {
         let arr = [];
         for (let i = 0; i < this.selectParams.length; i++) {
+          let _paramValue = this.selectParams[i].fieldVal;
+          if (this.selectParams[i].fieldDataType === "boolean") {
+            _paramValue = this.selectParams[i].fieldVal === "0" ? false : this.selectParams[i].fieldVal === "1" ? true : "";
+          }
           arr.push({
             paramName: this.selectParams[i].fieldId,
-            paramValue: this.selectParams[i].fieldVal,
-            paramMode: this.selectParams[i].fieldMode ? "=" : "like"
+            paramValue: _paramValue,
+            paramMode: this.selectParams[i].fieldMode,
+            paramType: this.selectParams[i].fieldDataType
           });
         }
         let json = {
           baseField: this.winParams.baseField,
-          client: "PC",
-          pageNum: this.winParams.pageNum,
-          pageSize: this.winParams.pageSize,
+          baseFixComWhere: "",
+          pageNum: this.page.pageNum,
+          pageSize: this.page.pageSize,
           _paramGroup: arr,
           _sortGroup: this.sortGroup
         };
@@ -275,14 +355,26 @@
         let url = "";
         this.tableData = [];
         if (this.winParams.activeTab === 0) {
-          url = this.winParams.pcUrlCus ? this.winParams.pcUrlCus : this.urlParams.urlAll;
+          url = this.winParams.urlCus ? this.winParams.urlCus : this.urlParams.urlAll;
         } else {
           url = this.urlParams.urlCom;
         }
+        requestJson.baseFixComWhere = this.getBaseFixComWhere();
         searchHelpList(requestJson, url).then(res => {
           if (res.code === 200) {
             this.tableData = res.rows;
-            this.winParams.total = res.total;
+            this.page.total = res.total;
+            //设置选中行
+            if (this.tableData && this.selectKeys && this.selectKeys.fKeyS && this.selectKeys.keys.length > 0) {
+              this.$nextTick(() => {
+                for (let i = 0; i < this.tableData.length; i++) {
+                  let _row = this.tableData[i];
+                  if (_row[this.selectKeys.fKeyS] && this.selectKeys.keys.includes(_row[this.selectKeys.fKeyS])) {
+                    this.$refs.refSearchHelpTable.toggleRowSelection(_row, true);
+                  }
+                }
+              });
+            }
           }
         });
       },
@@ -308,7 +400,7 @@
       //查询数据
       getSearch() {
         //点击搜索按钮要把页码重置为1
-        this.winParams.pageNum = 1;
+        this.page.pageNum = 1;
         this.getSelectParams();
       },
       //显示更多筛选
@@ -318,7 +410,8 @@
       //重置
       setReset() {
         //设置查询条件
-        this.setSelectParams(this.objHelp.pcFilter);
+        this.setSelectParams(this.objHelp.filter);
+        this.getSearch();
       },
       //同步数据
       getSync() {
@@ -348,10 +441,18 @@
       },
       //确定传输数据
       okay() {
-        if (this.listSel.length === 0) {
+        let _listSel = [];
+        if (this.listSel.length > 0 && this.selectKeys && this.selectKeys.f !== 6 && this.selectKeys.fKeyS && this.selectKeys.keys.length > 0) {
+          for (let i = 0; i < this.listSel.length; i++) {
+            if (!this.selectKeys.keys.includes(this.listSel[i][this.selectKeys.fKeyS])) _listSel.push(this.listSel[i]);
+          }
+        } else {
+          _listSel = this.listSel;
+        }
+        if (_listSel.length === 0) {
           this.$mE("请至少选择一行数据");
         } else {
-          this.okayExitSearchHelp(this.listSel);
+          this.okayExitSearchHelp(_listSel);
         }
       },
       //返回选中值
@@ -370,12 +471,12 @@
         this.$emit("closeDialog", type);
       },
 
-      /***********常用值(添加、删除)**************/
+      /***********常用值(添加、删除、固定常用值条件值)**************/
       //添加常用值
       handleClickRowAdd(row) {
         let params = {
           baseField: this.winParams.baseField,
-          client: "PC",
+          baseFixComWhere: this.getBaseFixComWhere(),
           fieldVal: JSON.stringify(row)
         };
         addCommonValues(params).then(res => {
@@ -389,7 +490,7 @@
       handleClickRowDel(row, index) {
         let params = {
           baseField: this.winParams.baseField,
-          client: "PC",
+          baseFixComWhere: this.getBaseFixComWhere(),
           fieldVal: JSON.stringify(row)
         };
         delCommonValues(params).then(res => {
@@ -398,6 +499,22 @@
             this.$mS("删除成功");
           }
         });
+      },
+      //获取固定常用值条件值
+      getBaseFixComWhere() {
+        let _baseFixComWhere = "N";
+        if (this.winParams.baseFixComFieldArr.length > 0) {
+          _baseFixComWhere = "Y";
+          for (let i = 0; i < this.winParams.baseFixComFieldArr.length; i++) {
+            const _fieldId = this.winParams.baseFixComFieldArr[i];
+            const _selectObj = this.selectParams.find(r => r.fieldId === _fieldId);
+            if (_selectObj) {
+              let _paramValue = _selectObj.fieldVal ? _selectObj.fieldVal.toString() : "";
+              _baseFixComWhere = _baseFixComWhere + ":" + _fieldId + "=" + _paramValue;
+            }
+          }
+        }
+        return _baseFixComWhere;
       },
 
       /************************搜索帮助集-选中当前搜索帮助**************************/
@@ -413,7 +530,7 @@
 
         this.winParams.activeTabGroup = fieldCode; //帮助集标签
         this.winParams.multipleChoice = objStyle.multipleChoice; //单选多选
-        this.winParams.pcTitle = objStyle.pcTitle; //窗口标题
+        this.winParams.title = objStyle.title; //窗口标题
         this.winParams.pcWidth = objStyle.pcWidth; //窗口宽度
         this.winParams.pcHeight = objStyle.pcHeight; //窗口高度
         this.winParams.groupFlag = objStyle.groupFlag; //帮助集

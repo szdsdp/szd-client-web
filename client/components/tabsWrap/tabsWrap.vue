@@ -9,7 +9,7 @@
   </div>
 </template>
 <script setup>
-  import { defineProps, ref, watch } from "vue";
+  import { ref, watch } from "vue";
   import _ from "lodash";
 
   const props = defineProps({
@@ -57,7 +57,7 @@
         }
       } else {
         if (classTop.value === "hide") {
-          classTop.value = "active";
+          classTop.value = classBottom.value === "hide" ? "active" : "";
         }
         //记录上次打开的Tab值
         _topNoFold.value = val;
@@ -81,6 +81,7 @@
       } else {
         if (classBottom.value === "hide") {
           classBottom.value = "active";
+          classTop.value = "";
         }
         //记录上次打开的Tab值
         _bottomNoFold.value = val;

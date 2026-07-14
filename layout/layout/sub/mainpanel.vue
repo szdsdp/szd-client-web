@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-  import { computed, defineProps } from "vue";
+  import { computed } from "vue";
   import store from "~store";
 
   const props = defineProps({
@@ -18,7 +18,11 @@
     }
   });
 
-  //缓存信息
+  // //缓存信息 <keep-alive v-if="visitedViews && visitedViews.length > 0" :include="cachedViews">
+  // 调整到各应用APP中处理
+  // const visitedViews = computed(() => {
+  //   return store.state.frameTag.visitedViews;
+  // });
   const cachedViews = computed(() => {
     return store.state.frameTag.cachedViews;
   });

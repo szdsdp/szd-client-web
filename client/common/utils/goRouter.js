@@ -4,6 +4,7 @@ import store from "~store";
 import { createVNode, render } from "vue";
 import { $m } from "./globalConfig";
 import { szdIfrDg } from "../../components/ifrDg/ifrDg.js";
+import { szdPrtRouter, szdPrtRouterDg } from "../../components/printTemplate/printTemplate";
 import qiankunMicro from "../qiankun/qiankunMicro";
 import qs from "qs";
 
@@ -13,6 +14,7 @@ const SYS_CODE = process.env.VUE_APP_SYS_CODE;
 /**
  * 获取路由代码
  * @param {Object} _route 路由对象(默认当前路由)
+ * @return {String} 返回路由代码
  */
 function getRouterCode(_route = undefined) {
   const currentRoute = _route ? _route : router.currentRoute.value;
@@ -26,6 +28,7 @@ function getRouterCode(_route = undefined) {
 /**
  * 获取路由代码-根据路径
  * @param {String} path 路由代码
+ * @return {String} 返回路由代码
  */
 function getRouterCodePath(path) {
   let ls_route = undefined;
@@ -42,6 +45,7 @@ function getRouterCodePath(path) {
 /**
  * 获取路由对象
  * @param {String} routerCode 路由代码
+ * @return {Object} 返回路由对象
  */
 function getRouterObj(routerCode) {
   if (routerCode) {
@@ -68,7 +72,7 @@ function getRouterObj(routerCode) {
  * @param {Object} params 地址参数
  * @param {Object} mode 导航模式 prt 打印  dialog 弹窗打开 blank 新窗口
  */
-function goNav(routerCode, params = {}, mode = { prt: false, dialog: false, blank: false }) {
+export function goNav(routerCode, params = {}, mode = { prt: false, dialog: false, blank: false }) {
   if (!routerCode) {
     $m("CORE_CLIENT.E020", routerCode); //路由代码不能为空
     return;
@@ -84,15 +88,21 @@ function goNav(routerCode, params = {}, mode = { prt: false, dialog: false, blan
   }
   //跳转打印路由
   if (mode.prt) {
-    if (routerObj.routerCodePrt) {
-      return goNav(routerObj.routerCodePrt, params, { prt: false });
-    } else if (routerObj.programPrt) {
-      params["program"] = routerObj.programPrt;
-      goNavPrt(params);
-      return;
+    szdPrtRouter(routerCode, params).then();
+    return;
+  }
+
+  //是否弹出新的页签
+  if (routerObj.isAutoBlank === true) {
+    let visitedViews = store.state.frameTag.visitedViews;
+    if (window.__POWERED_BY_QIANKUN__ && SYS_CODE !== "CORE") {
+      if (visitedViews && visitedViews.includes(routerCode)) {
+        mode.blank = true;
+      }
     } else {
-      $m("CORE_CLIENT.E021"); //本功能不支持打印
-      return;
+      if (visitedViews.find(r => r.name === routerCode || (r.meta && r.meta.name === routerCode))) {
+        mode.blank = true;
+      }
     }
   }
 
@@ -100,7 +110,6 @@ function goNav(routerCode, params = {}, mode = { prt: false, dialog: false, blan
   if (SYS_CODE !== "CORE" && routerObj.sysCodeWeb !== SYS_CODE) {
     qiankunMicro.setGlobalState({
       handle: "coreGoNav",
-      navTab: "",
       szdMircoProps: { routerCode: routerCode, params: params, mode: mode }
     });
     return;
@@ -146,7 +155,7 @@ function goNav(routerCode, params = {}, mode = { prt: false, dialog: false, blan
  * @param {Object} params 地址参数
  * @param {Object} mode 导航模式 prt 打印
  */
-function goNavDg(routerCode, params = {}, mode = { prt: false }) {
+export function goNavDg(routerCode, params = {}, mode = { prt: false }) {
   //检查和获取路由对象
   const routerObj = getRouterObj(routerCode);
   if (!routerObj) return null;
@@ -155,7 +164,6 @@ function goNavDg(routerCode, params = {}, mode = { prt: false }) {
   if (SYS_CODE !== "CORE" && routerObj.sysCodeWeb !== SYS_CODE) {
     qiankunMicro.setGlobalState({
       handle: "coreGoNavDg",
-      navTab: "",
       szdMircoProps: { routerCode: routerCode, params: params, mode: mode }
     });
     return;
@@ -163,28 +171,36 @@ function goNavDg(routerCode, params = {}, mode = { prt: false }) {
 
   //打开应用
   if (mode.prt) {
-    //跳转打印路由
-    if (routerObj.routerCodePrt) {
-      szdIfrDg(routerObj.routerCodePrt, params).then();
-    } else {
-      $m("CORE_CLIENT.E021"); //本功能不支持打印
-    }
+    szdPrtRouterDg(routerCode).then(res => {
+      if (res && res.routerCode) {
+        if (res.routerCode === "CORE_SCP_03P") {
+          params["program"] = res.program;
+          szdIfrDg(res.routerCode, { print: btoa(JSON.stringify(params)) }).then();
+        } else {
+          szdIfrDg(res.routerCode, params).then();
+        }
+      }
+    });
   } else {
     szdIfrDg(routerCode, params).then();
   }
 }
 
 /**
- * 打印路由程序
+ * 零代码打印-程序
  * @param {Object,Array} params 打印参数
- * [{program:程序代码,bussId:值}]
+ * 数组：[{program:程序代码,bussId:值或者逗号分隔多值}]
+ * 对象：{program:程序代码,bussId:值或者逗号分隔多值}
  */
 function goNavPrt(params) {
   let print = [];
   if (Array.isArray(params)) {
     for (let i = 0; i < params.length; i++) {
       if (params[i].program && params[i].bussId) {
-        print.push({ program: params[i].program, bussId: params[i].bussId });
+        const bArr = params[i].bussId.toString().split(",");
+        for (let j = 0; j < bArr.length; j++) {
+          print.push({ program: params[i].program, bussId: bArr[j] });
+        }
       } else {
         $m("CORE_CLIENT.E109"); //打印程序和业务Id不能为空
         return;
@@ -192,7 +208,10 @@ function goNavPrt(params) {
     }
   } else {
     if (params.program && params.bussId) {
-      print.push({ program: params.program, bussId: params.bussId, test: params.test });
+      const bArr = params.bussId.toString().split(",");
+      for (let j = 0; j < bArr.length; j++) {
+        print.push({ program: params.program, bussId: bArr[j], test: params.test });
+      }
     } else {
       $m("CORE_CLIENT.E109"); //打印程序和业务Id不能为空
       return;
@@ -205,11 +224,12 @@ function goNavPrt(params) {
  * 获取路由的全路径
  * @param {String} routerCode 路由代码
  * @param {Object} params 地址参数
+ * @return {String} 返回Url地址
  */
 function goNavPath(routerCode, params = {}) {
   if (!routerCode) {
     $m("CORE_CLIENT.E020"); //路由代码不能为空
-    return;
+    return null;
   }
   routerCode = routerCode.toUpperCase();
   //检查和获取路由对象
@@ -263,22 +283,59 @@ function setUrlParams(params) {
 }
 
 /**
+ * 替换URL地址
+ * @param {Object|String} params 地址参数
+ * @param {Boolean} replaceState 替换方式 true不刷新页面，替换当前回退地址
+ */
+function replaceUrl(params, replaceState = true) {
+  let urlPar = "";
+  if (typeof params === "string") {
+    urlPar = params;
+  } else {
+    for (let key in params) {
+      if (params[key] === undefined) continue;
+      if (!urlPar) {
+        urlPar = key + "=" + params[key];
+      } else {
+        urlPar = urlPar + "&" + key + "=" + params[key];
+      }
+    }
+  }
+  let newUrl = `${window.location.origin}${window.location.pathname}`;
+  if (urlPar) {
+    newUrl = newUrl + "?" + urlPar;
+  }
+  if (replaceState) {
+    window.history.replaceState(null, "", newUrl);
+  } else {
+    window.location.replace(newUrl);
+  }
+}
+
+/**
  * 关闭当前页签
  */
 function closeFrameTag() {
   let visitedViews = store.state.frameTag.visitedViews;
   if (visitedViews.length > 0) {
-    for (let i = 0; i < visitedViews.length; i++) {
-      if (router.currentRoute.value.path === visitedViews[i].path) {
-        store.dispatch("frameTag/delView", visitedViews[i]).then(({ visitedViews }) => {
-          const latestView = visitedViews.slice(-1)[0];
-          if (latestView) {
-            router.push(latestView.fullPath);
-          } else {
-            router.push("/");
-          }
-        });
-        break;
+    if (window.__POWERED_BY_QIANKUN__ && SYS_CODE !== "CORE") {
+      qiankunMicro.setGlobalState({
+        handle: "coreNavTab",
+        szdMircoProps: { event: "closeSelf", name: getRouterCode(), path: router.currentRoute.value.path }
+      });
+    } else {
+      for (let i = 0; i < visitedViews.length; i++) {
+        if (router.currentRoute.value.path === visitedViews[i].path) {
+          store.dispatch("frameTag/delView", visitedViews[i]).then(({ visitedViews }) => {
+            const latestView = visitedViews.slice(-1)[0];
+            if (latestView) {
+              router.push(latestView.fullPath);
+            } else {
+              router.push("/");
+            }
+          });
+          break;
+        }
       }
     }
   } else {
@@ -329,6 +386,7 @@ const szdRouter = {
   getFullPath,
   getUrlParams,
   setUrlParams,
+  replaceUrl,
   closeFrameTag,
   renderComp
 };

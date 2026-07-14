@@ -12,17 +12,22 @@ const SYS_CODE = process.env.VUE_APP_SYS_CODE;
 const loginUser = {
   state: {
     token: "", //获取token
+    appWeb: false, //app端访问
     user: {}, //用户信息
     menus: [], //菜单信息
     routesObj: {}, // 路由对象
     sysMicro: {}, //微应用
     webParams: {}, //Web参数配置
+    autocomplete: [], //自动补全配置
     homeConfig: {}, //主题配置
     perParams: {} //个人参数配置
   },
   mutations: {
     SET_TOKEN: (state, token) => {
       state.token = token;
+    },
+    SET_APPWEB: (state, appWeb) => {
+      state.appWeb = appWeb;
     },
     SET_USER: (state, user) => {
       state.user = user;
@@ -38,6 +43,9 @@ const loginUser = {
     },
     SET_WEBPARAMS: (state, webParams) => {
       state.webParams = webParams;
+    },
+    SET_AUTOCOMPLETE: (state, autocomplete) => {
+      state.autocomplete = autocomplete;
     },
     SET_HOMECONFIG: (state, homeConfig) => {
       state.homeConfig = homeConfig;
@@ -101,11 +109,13 @@ function dealUserInfo({ commit }, res) {
   return new Promise(resolve => {
     let _loginUser = {
       token: szdStoreCookie.getToken(),
+      appWeb: res.appWeb, //app端访问
       user: res.user, //用户
       menus: res.menus, //展示菜单
       routesObj: {}, //路由
       sysMicro: {}, //微应用
       webParams: {}, //web参数
+      autocomplete: [], //自动补全
       homeConfig: {}, //主题配置
       perParams: res.userPer //个人参数
     };
@@ -124,17 +134,34 @@ function dealUserInfo({ commit }, res) {
     //web参数
     for (let i = 0; i < res.webParams.length; i++) {
       const item = res.webParams[i];
-      if (item.configType && item.configKey) {
-        if (item.configKey === "web_table_pagination") {
-          let temp = JSON.parse(item.configValue);
-          if (Array.isArray(temp) && temp.length > 0) {
+      if (item.configType && item.configKey && item.configValue) {
+        try {
+          if (item.configKey === "web_table_pagination") {
+            let temp = JSON.parse(item.configValue);
+            if (Array.isArray(temp) && temp.length > 0) {
+              _loginUser.webParams[item.configKey] = JSON.parse(item.configValue);
+            }
+          } else if (item.configJson) {
             _loginUser.webParams[item.configKey] = JSON.parse(item.configValue);
+          } else {
+            _loginUser.webParams[item.configKey] = item.configValue;
           }
-        } else {
-          _loginUser.webParams[item.configKey] = item.configValue;
+        } catch (e) {
+          console.error("webParams JSON解析失败, configKey: " + item.configKey + " 转化内容configValue," + item.configValue, e);
         }
       }
     }
+    //timeout参数
+    _loginUser.webParams["timeout"] = {};
+    for (let i = 0; i < res.timeout.length; i++) {
+      const item = res.timeout[i];
+      const numValue = Number(item.configValue);
+      if (item.configKey && item.configValue && Number.isFinite(numValue) && numValue > 0) {
+        _loginUser.webParams.timeout[item.configKey] = numValue;
+      }
+    }
+    //自动补全
+    _loginUser.autocomplete = res.autocomplete && res.autocomplete.length > 0 ? res.autocomplete : [];
     //home和导航配置
     _loginUser.homeConfig = setHomeConfig(res.homeConfig, _loginUser.routesObj);
     //md5参数
@@ -187,6 +214,13 @@ function setRoutesObj(routesArr) {
       isFrame: item.isFrame, //路由显示类型  "0".默认 "1".新标签(带框架)  "2".新标签(无框架) "3".新标签(无框架，路由唯一) "4".dialog弹窗 "9".新标签(外链)
       isBlank: ["1", "2", "3", "9"].includes(item.isFrame), //新标签
       isLayout: ["0", "1"].includes(item.isFrame), //带框架
+      isAutoBlank: item.isAutoBlank, //ie页签自动打开
+      searchFlag: item.searchFlag, //支持搜索
+      icon: item.icon, //图标
+      titlePc: item.titlePc ? item.titlePc : "", //PC页签标题
+      //工作流信息
+      wfBatchApprFlag: item.wfBatchApprFlag, //批量审批
+      wfRejectReasonFlag: item.wfRejectReasonFlag, //拒绝原因
 
       //iframe弹窗框架
       iframeTitle: item.iframeTitle, //iframe框架标题
@@ -201,11 +235,14 @@ function setRoutesObj(routesArr) {
       //业务类型
       bstp: item.bstp,
       bstpCount: item.bstpCount,
+      //菜单权限-编辑
+      authEdit: item.authEdit, //菜单权限-编辑
       //路由默认参数
       name: item.routerCode, //用于检查唯一值
       meta: {
         name: item.routerCode,
         title: item.routerName,
+        sysCodeWeb: item.sysCodeWeb, //前端系统代码
         keepAlive: item.keepAlive //页面缓存
       }
     };
@@ -261,11 +298,13 @@ function setHomeConfig(homeConfig, routesObj) {
 //设置Vuex和加载路由
 function setVuexLoginUser({ commit }, _loginUser) {
   commit("SET_TOKEN", szdStoreCookie.getToken());
+  commit("SET_APPWEB", _loginUser.appWeb);
   commit("SET_USER", _loginUser.user);
   commit("SET_MENUS", _loginUser.menus);
   commit("SET_ROUTESOBJ", _loginUser.routesObj);
   commit("SET_SYSMICRO", _loginUser.sysMicro);
   commit("SET_WEBPARAMS", _loginUser.webParams);
+  commit("SET_AUTOCOMPLETE", _loginUser.autocomplete);
   commit("SET_HOMECONFIG", _loginUser.homeConfig);
   commit("SET_PERPARAMS", _loginUser.perParams);
   //加载路由: 三方系统的不加载 仅加载自己的微应用，其它微应用各自加载
@@ -302,11 +341,13 @@ function clearStore({ commit }) {
   szdStoreCookie.removeToken();
   szdStoreSession.removeCoreLogin();
   commit("SET_TOKEN", "");
+  commit("SET_APPWEB", false);
   commit("SET_USER", {});
   commit("SET_MENUS", []);
   commit("SET_ROUTESOBJ", {});
   commit("SET_SYSMICRO", {});
   commit("SET_WEBPARAMS", {});
+  commit("SET_AUTOCOMPLETE", []);
   commit("SET_HOMECONFIG", {});
   commit("SET_PERPARAMS", {});
 }

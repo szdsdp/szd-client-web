@@ -27,7 +27,7 @@
           <el-button v-if="!scope.row.varDefault" type="primary" link icon="Edit" @click="handleRowDefSet(scope.row)">
             {{ $t("设置默认") }}
           </el-button>
-          <el-button v-else type="primary" link icon="Edit" @click="handleRowDefRemove(scope.row)">
+          <el-button v-else type="warning" link icon="Edit" @click="handleRowDefRemove(scope.row)">
             {{ $t("取消默认") }}
           </el-button>
           <el-button type="primary" link icon="Delete" @click="handleRowDel(scope.row)">{{ $t("删除") }}</el-button>
@@ -38,7 +38,6 @@
 </template>
 
 <script setup>
-  import { defineEmits, defineProps } from "vue";
   import { $m, $t } from "../../../common/utils/globalConfig";
   import { delVariant, setVarDef, removeVarDef } from "../../api/table";
   //回调事件

@@ -82,6 +82,13 @@
           :ctrl="handleCtrlParam(_fCat, scope.row)"
           @change="handleRowChange(_fCat, scope.row, scope.$index)" />
       </template>
+      <!--  控件类型 password -->
+      <template v-else-if="_fCat.ctrlType === 'password'">
+        <szd-password-ctrl
+          v-model="scope.row[_fCat.field]"
+          :ctrl="handleCtrlParam(_fCat, scope.row)"
+          @change="handleRowChange(_fCat, scope.row, scope.$index)" />
+      </template>
       <!--  控件类型 svg -->
       <template v-else-if="_fCat.ctrlType === 'svg'">
         <szd-svg
@@ -90,8 +97,16 @@
           :color="_fCat.ctrlParam.colorField ? scope.row[_fCat.ctrlParam.colorField] : _fCat.ctrlParam.color"
           :fontSize="_fCat.ctrlParam.fontSize"
           :label="_fCat.ctrlParam.labelField ? scope.row[_fCat.labelField] : ''"
-          :clicked="_fCat.ctrlParam.click"
+          :clicked="_fCat.ctrlParam.clicked"
           @click="handleRowClick(_fCat, scope.row, scope.$index)" />
+      </template>
+      <!--  控件类型 upload -->
+      <template v-else-if="_fCat.ctrlType === 'upload'">
+        <szd-upload-view-ctrl
+          v-model="scope.row[_fCat.field]"
+          v-model:fileCount="scope.row['$SZDUpload_' + _fCat.field]"
+          :ctrl="handleCtrlParam(_fCat, scope.row)"
+          isTable />
       </template>
       <!--  控件类型 button -->
       <template v-else-if="_fCat.ctrlType === 'button'">
@@ -117,11 +132,9 @@
 </template>
 
 <script setup>
-  import { defineProps, defineEmits, computed } from "vue";
-  import _ from "lodash";
+  import { computed } from "vue";
   import { setRowHelp } from "./js/tableFunc";
   import tableCompColumn from "./tableCompColumn.vue";
-  import szdRouter from "../../common/utils/goRouter";
   import { getCtrlParam, getCtrlParamButton } from "./js/tableParamCtrl";
 
   //回调事件
@@ -174,25 +187,7 @@
   };
   //行事件-数据单击 $click
   const handleRowClick = (fCat, row, rowIndex) => {
-    if (_.isObject(fCat.click)) {
-      let _nav = {
-        routerCode: fCat.click.routerCode,
-        params: {},
-        mode: fCat.click.mode
-      };
-      if (fCat.click.params) {
-        for (let key in fCat.click.params) {
-          if (_.isString(fCat.click.params[key]) && fCat.click.params[key].startsWith("row.")) {
-            _nav.params[key] = row[fCat.click.params[key].substring(4)];
-          } else {
-            _nav.params[key] = fCat.click.params[key];
-          }
-        }
-      }
-      szdRouter.goNav(_nav.routerCode, _nav.params, _nav.mode);
-    } else {
-      callEmitRowEvent("$click", fCat.field, row, rowIndex);
-    }
+    callEmitRowEvent("$click", fCat.field, row, rowIndex);
   };
 
   //调用父级功能-行处理事件

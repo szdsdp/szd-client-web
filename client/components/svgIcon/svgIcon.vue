@@ -6,7 +6,7 @@
 </template>
 
 <script setup>
-  import { defineProps, computed, defineEmits } from "vue";
+  import { computed } from "vue";
 
   const props = defineProps({
     name: {

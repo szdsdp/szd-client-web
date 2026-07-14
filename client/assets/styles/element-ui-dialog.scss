@@ -10,6 +10,7 @@
 .el-dialog {
   display: flex; //浮动盒
   flex-direction: column; //：主轴为垂直方向，起点在上沿
+  padding: 0 !important;
 
   //标题 高度36
   .el-dialog__header {
@@ -38,7 +39,7 @@
     overflow: auto;
     display: flex;
     flex-direction: column;
-    
+
     .dialog-content {
       overflow-y: auto;
     }
@@ -104,12 +105,13 @@
 }
 
 .el-message-box {
-  border-radius: 0px;
-  border: 0px solid #EBEEF5;
+  border-radius: 0;
+  border: 0 solid #EBEEF5;
+  padding: 0 0 10px 0;
 
   .el-message-box__header {
     background-color: #bed9f2;
-    padding: 0px 10px 0 10px;
+    padding: 0 10px 0 10px;
     height: 36px;
     line-height: 36px;
 
@@ -125,6 +127,14 @@
       line-height: 36px;
       top: 0;
     }
+  }
+
+  .el-message-box__content {
+    padding: 10px var(--el-messagebox-padding-primary);
+  }
+
+  .el-message-box__btns {
+    padding: 5px 15px 0 15px;
   }
 
   .el-input__inner {
@@ -159,3 +169,8 @@
   background: url("../icons/br.png") left top no-repeat;
   background-size: 100% 100%;
 }
+
+.u-el-loading-cust {
+  z-index: 9000 !important;
+}
+

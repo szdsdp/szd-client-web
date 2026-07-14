@@ -2,9 +2,15 @@
   <!-- img预览 -->
   <el-image v-if="_fileType === 'img'" :src="_src" fit="contain" />
   <!-- pdf预览 -->
-  <iframe v-else-if="_fileType === 'pdf'" :src="_src" frameborder="0" style="width: 100%; height: 100%" />
+  <iframe v-else-if="_fileType === 'pdf'" :src="_src" frameborder="0" style="width: 100%; height: 100%; border: none" />
   <!-- txt预览 -->
-  <iframe v-else-if="_fileType === 'txt'" :src="_src" frameborder="0" style="width: 100%; height: 100%" />
+  <!--  <iframe v-else-if="['txt'].includes(_fileType)" :src="_src" frameborder="0" style="width: 100%; height: 100%; border: none" />-->
+  <!-- html预览 -->
+  <iframe
+    v-else-if="['html', 'xml', 'json', 'txt'].includes(_fileType)"
+    :srcdoc="_src"
+    frameborder="0"
+    style="width: 100%; height: 100%; border: none" />
   <!-- video预览 -->
   <video v-else-if="_fileType === 'video'" :src="_src" controls style="width: 100%; height: 100%" />
   <!-- docx预览 -->
@@ -23,10 +29,10 @@
 </template>
 
 <script setup>
-  import { defineProps, ref, nextTick, computed, onMounted } from "vue";
+  import { ref, nextTick, computed, onMounted } from "vue";
   import { $m, $t } from "../../common/utils/globalConfig";
-  import { downloadFile } from "./api";
-  import { szdGetFileBlobType, szdGetFileType } from "./fileView";
+  import { downloadFileUrl } from "../api/upload";
+  import szdFile from "../../common/tools/fileTool";
   import VueOfficeExcel from "@vue-office/excel";
   import "@vue-office/excel/lib/index.css";
   import VueOfficeDocx from "@vue-office/docx";
@@ -38,43 +44,24 @@
       type: String,
       default: ""
     },
-    srcBlob: {
-      type: String,
-      default: ""
-    },
     fileName: {
       type: String,
       default: ""
-    },
-    isBlob: {
-      type: Boolean,
-      default: false
     }
+  });
+  //是否是Blob
+  const _isBlob = computed(() => {
+    return props.src ? props.src.toString().startsWith("blob:") : false;
   });
   //文件后缀类型
   const _fileType = computed(() => {
-    if (props.fileName) {
-      return szdGetFileType(props.fileName);
-    } else {
-      return szdGetFileType(props.src);
-    }
+    const _fileName = props.fileName ? props.fileName : props.src;
+    return szdFile.getFileViewType(_fileName);
   });
   //下载文件方式
-  const _blobType = computed(() => {
-    if (props.isBlob || _fileType.value === "xls") {
-      let _fileName = props.fileName ? props.fileName : props.src;
-      let bt = szdGetFileBlobType(_fileName);
-      if (!bt) {
-        nextTick(() => {
-          $m("CORE_CLIENT.W013"); //不支持的文件类型在线查看, 请下载后查看
-        });
-        return "";
-      } else {
-        return bt;
-      }
-    } else {
-      return "";
-    }
+  const _mimeType = computed(() => {
+    const _fileName = props.fileName ? props.fileName : props.src;
+    return szdFile.getFileMimeType(_fileName);
   });
 
   //字节流
@@ -94,63 +81,126 @@
 
   //初始化数据
   const initDataSrc = () => {
-    if (_fileType.value === "xls") {
-      if (props.src) {
-        fileXls();
-      } else {
-        $m("CORE_CLIENT.E018"); //src地址不能为空
-      }
+    if (!props.src) {
+      $m("CORE_CLIENT.E018"); //src地址不能为空
+      return;
+    }
+    if (["xls", "html", "xml", "json", "txt"].includes(_fileType.value)) {
+      downloadBlob();
+    } else if (_isBlob.value) {
+      _src.value = props.src;
+      // } else if (["txt"].includes(_fileType.value)) {
+      //   downloadBlobUrl();
     } else {
-      if (props.srcBlob) {
-        _src.value = props.srcBlob;
-      } else if (props.src) {
-        if (props.isBlob) {
-          downloadBlob();
-        } else {
-          _src.value = props.src;
-        }
-      } else {
-        $m("CORE_CLIENT.E019"); //src或srcBlob地址不能为空
-      }
+      _src.value = props.src;
     }
   };
 
-  //下载文件
+  /*****************************************************************
+   * 生成Blob字节流
+   */
   const downloadBlob = () => {
-    downloadFile(props.src).then(res => {
-      if (["img", "xlsx", "docx", "pdf", "txt"].includes(_fileType.value)) {
-        //图片/pdf/txt类型
-        const blob = new Blob([res], { type: _blobType.value });
-        _src.value = window.URL.createObjectURL(blob);
-      } else {
-        const blob = new Blob([res]);
-        _src.value = window.URL.createObjectURL(blob);
-      }
+    if (_isBlob.value) {
+      fetch(props.src)
+        .then(res => res.blob())
+        .then(blob => downloadBlobStream(blob));
+    } else {
+      downloadFileUrl(props.src).then(res => {
+        let blob = new Blob([res], { type: _mimeType.value });
+        downloadBlobStream(blob);
+      });
+    }
+  };
+  //分别处理
+  const downloadBlobStream = blob => {
+    if (_fileType.value === "xls") {
+      downloadBlobXls(blob);
+    } else if (["html", "xml", "json", "txt"].includes(_fileType.value)) {
+      downloadBlobHtml(blob);
+    } else {
+      _src.value = URL.createObjectURL(blob);
+    }
+  };
+
+  /*****************************************************************
+   * 生成前端临时预览地址 Blob Url
+   */
+  const downloadBlobUrl = () => {
+    downloadFileUrl(props.src).then(async res => {
+      const blob = new Blob([res], { type: _mimeType.value });
+      _src.value = URL.createObjectURL(blob);
     });
   };
 
-  //xls预览-下载文件
-  const fileXls = () => {
-    downloadFile(props.src).then(res => {
-      let blob = new Blob([res], { type: _blobType.value });
-      let reader = new FileReader();
-      //另一种方式：blob类型转换为ArrayBuffer类型 reader.readAsArrayBuffer(blob);  XLSX.read(new Uint8Array(ev.target.result), { type: "array" });
-      reader.readAsBinaryString(blob);
-      //文件转换
-      reader.onload = ev => {
-        xlsWorkBook.value = XLSX.read(ev.target.result, { type: "binary" });
-        xlsSheets.value = xlsWorkBook.value.SheetNames;
-        xlsView.value = XLSX.utils.sheet_to_html(xlsWorkBook.value.Sheets[xlsSheets.value[0]]);
-        nextTick(() => {
-          setStyle4ExcelHtml();
-        });
-      };
-    });
+  /*****************************************************************
+   * html xml json 预览
+   */
+  const downloadBlobHtml = blob => {
+    const reader = new FileReader();
+    reader.readAsText(blob, "UTF-8");
+    reader.onload = () => {
+      let _html = reader.result;
+      if (!_html) {
+        _src.value = _html;
+        return;
+      }
+      let realCharset = "UTF-8";
+      if (_fileType.value === "html") {
+        const match = _html.match(/<meta[^>]*charset\s*=\s*["']?([^"'\s;>]+)/i);
+        realCharset = match?.[1]?.toUpperCase() || realCharset;
+      } else if (_fileType.value === "xml") {
+        const match = _html.match(/^<\?xml.*encoding\s*=\s*["']?([^"'\s]+)/i);
+        realCharset = match?.[1]?.toUpperCase() || realCharset;
+      }
+      if (realCharset === "UTF-8" && _html.includes("\uFFFD")) {
+        realCharset = "GBK";
+      }
+      if (realCharset === "UTF-8") {
+        downloadBlobHtmlContent(_html, realCharset);
+      } else {
+        const correctReader = new FileReader();
+        correctReader.readAsText(blob, realCharset);
+        correctReader.onload = () => {
+          downloadBlobHtmlContent(correctReader.result, realCharset);
+        };
+      }
+    };
   };
-  //xls预览-页签切换
-  const handleTabClickXls = obj => {
-    xlsView.value = XLSX.utils.sheet_to_html(xlsWorkBook.value.Sheets[xlsSheets.value[obj.index]]);
+
+  const downloadBlobHtmlContent = (html, realCharset) => {
+    if (["txt"].includes(_fileType.value)) {
+      _src.value = `<pre style="padding:10px;margin:0;white-space:pre-wrap;word-break:break-all;">${escapeHtml(html)}</pre>`;
+    } else if (["xml", "json"].includes(_fileType.value)) {
+      _src.value = `<pre style="padding:10px;margin:0">${escapeHtml(html)}</pre>`;
+    } else {
+      _src.value = html;
+    }
   };
+
+  const escapeHtml = str => {
+    if (!str) return "";
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  };
+
+  /*****************************************************************
+   * xls预览
+   */
+  //xls预览-下载文件-转化文件
+  const downloadBlobXls = blob => {
+    let reader = new FileReader();
+    //另一种方式：blob类型转换为ArrayBuffer类型 reader.readAsArrayBuffer(blob);  XLSX.read(new Uint8Array(ev.target.result), { type: "array" });
+    reader.readAsBinaryString(blob);
+    //文件转换
+    reader.onload = ev => {
+      xlsWorkBook.value = XLSX.read(ev.target.result, { type: "binary" });
+      xlsSheets.value = xlsWorkBook.value.SheetNames;
+      xlsView.value = XLSX.utils.sheet_to_html(xlsWorkBook.value.Sheets[xlsSheets.value[0]]);
+      nextTick(() => {
+        setStyle4ExcelHtml();
+      });
+    };
+  };
+
   //设置Excel转成HTML后的样式
   const setStyle4ExcelHtml = () => {
     const xlsViewDOM = document.getElementById("xlsView");
@@ -176,6 +226,11 @@
         }
       }
     }
+  };
+
+  //xls预览-页签切换
+  const handleTabClickXls = obj => {
+    xlsView.value = XLSX.utils.sheet_to_html(xlsWorkBook.value.Sheets[xlsSheets.value[obj.index]]);
   };
 </script>
 <style lang="scss" scoped>

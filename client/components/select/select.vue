@@ -1,14 +1,14 @@
 <template>
   <div v-if="!_fst.hide" style="width: 100%; height: 100%">
     <el-select v-model="_modelValue" filterable :placeholder="placeholder" :clearable="clearable" :disabled="_fst.disabled" @change="handleChange">
-      <el-option v-for="(item, index) in _options" :key="index" :label="item.svalname" :value="item.svalue" />
+      <el-option v-for="(item, index) in _options" :key="index" :label="showKey ? item.svalname : item.sname" :value="item.svalue" />
     </el-select>
   </div>
 </template>
 
 <script setup>
-  import { defineProps, defineEmits, computed, ref, onMounted, watch } from "vue";
-  import { useStore } from "vuex";
+  import { computed, ref, onMounted, watch } from "vue";
+  import store from "~store";
   import { selectBaseView } from "../api/selectOption";
   import szdStoreLocal from "../../common/store/storeLocal";
   import szdComp from "../../common/utils/component";
@@ -43,6 +43,11 @@
     placeholder: {
       type: String,
       default: " "
+    },
+    //显示key
+    showKey: {
+      type: Boolean,
+      default: true
     },
     //默认首个
     first: {
@@ -102,7 +107,7 @@
       //设置查询条件数组
       let arr = [];
       props.baseSelect.forEach(item => {
-        arr.push({ paramName: item[0], paramValue: item[1], paramMode: "=" });
+        arr.push({ paramName: item[0], paramValue: item[1], paramMode: "EQ" });
       });
       //获取实时数据
       selectBaseView({ baseField: baseField, _paramGroup: arr }).then(res => {
@@ -110,7 +115,7 @@
           _options.value = res.data;
           getSvalName();
         } else {
-          console.error("基础字段" + baseField + "查询报错" + res.msg);
+          if (arr.length === 0) console.error("基础字段" + baseField + "查询报错" + res.msg);
         }
       });
     } else {
@@ -120,8 +125,6 @@
         _options.value = localDict[baseField];
         getSvalName();
       } else {
-        //获取Vuex数据
-        const store = useStore();
         const vuexBase = store.state.vuexData.dict;
         if (vuexBase && vuexBase[baseField]) {
           _options.value = vuexBase[baseField];

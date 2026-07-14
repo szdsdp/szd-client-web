@@ -1,5 +1,6 @@
 import store from "~store";
 import _ from "lodash";
+import szdStoreSession from "../../../common/store/storeSession";
 
 const const_type = ["string", "number", "boolean", "date", "datetime", "time", "year", "month"]; //数据类型
 const const_btn_type = ["", "primary", "success", "warning", "danger", "info"]; //按钮样式
@@ -24,6 +25,8 @@ export function initSchLay(schLay) {
   _lay.schCat = initSchCat(_lay.layout, schLay.schCat);
   //工具栏按钮
   _lay.schBtn = initSchBtn(_lay.layout, schLay.schBtn);
+  //输出规则
+  if (_lay.layout.showRule) initShowRule(_lay);
 
   return _lay;
 }
@@ -39,6 +42,7 @@ function initLayout(params) {
     span: Number(params.span) > 0 && Number(params.span) <= 24 ? Number(params.span) : 8, //每行个查询条件占用
     more: Number(params.more) > 0 ? Number(params.more) : 0, //更多筛选 默认显示的查询条件，0不控制
     reset: _.isBoolean(params.reset) ? params.reset : true, //重置自动查询
+    showRule: params.showRule, //输出规则
     //内部参数
     $SZDUserId: store.state.loginUser.user.userId,
     $SZDVar: {}
@@ -69,7 +73,9 @@ function initSchCat(layout, fCat) {
       disabled: item.disabled,
       readonly: item.readonly,
       clearable: item.clearable,
+      clearSpace: _.isBoolean(item.clearSpace) ? item.clearSpace : false,
       selectOpt: item.selectOpt,
+      whereOpt: item.whereOpt,
       prop: item.field,
       labelWidth: item.labelWidth, //form-item-label的宽度
       required: item.required,
@@ -116,4 +122,50 @@ function initSchBtnAdd(_schBtn, item) {
     color: item.color,
     disabled: _.isBoolean(item.disabled) ? item.disabled : false
   });
+}
+
+function initShowRule(_lay) {
+  let sParam = szdStoreSession.getWebParams(_lay.layout.showRule, false);
+  if (!sParam) return;
+  //输出数量
+  if (sParam.more) {
+    const numMore = Number(sParam.more);
+    if (Number.isFinite(numMore) && numMore > 0) _lay.layout.more = numMore;
+  }
+  //输出位置
+  if (sParam.schCat && Array.isArray(sParam.schCat) && sParam.schCat.length > 0) {
+    let _schCat = [];
+    let _ck = [];
+    for (let i = 0; i < sParam.schCat.length; i++) {
+      const item = sParam.schCat[i];
+      if (!item) continue;
+      if (_.isObject(item)) {
+        if (item.field && _ck.includes(item.field)) continue;
+        _ck.push(item.field);
+        let fCat = _lay.schCat.find(r => r.field === item.field);
+        if (fCat) {
+          for (let key in item) {
+            if (["noTo", "noExt", "disabled", "readonly", "clearable", "clearSpace", "selectOpt", "required"].includes(key)) {
+              if (item[key] === true || item[key] === "true") {
+                fCat[key] = true;
+              } else {
+                fCat[key] = false;
+              }
+            } else if (["whereOpt"].includes(key) && ["EQ", "SP"].includes(item[key])) {
+              fCat[key] = item[key];
+            }
+          }
+          _schCat.push(fCat);
+        }
+      } else {
+        if (_ck.includes(item)) continue;
+        _ck.push(item);
+        let fCat = _lay.schCat.find(r => r.field === item);
+        if (fCat) {
+          _schCat.push(fCat);
+        }
+      }
+    }
+    if (_schCat.length > 0) _lay.schCat = _schCat;
+  }
 }

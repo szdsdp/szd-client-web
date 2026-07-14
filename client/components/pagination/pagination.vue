@@ -1,13 +1,12 @@
 <template>
   <!-- 通用分页组件 -->
-  <div v-show="total > 0" class="pagination-container" :style="position === 'right' ? '' : { height: 'auto', padding: 0 }">
+  <div v-show="total > 0" class="pagination-container">
     <el-pagination
       v-model:current-page="_currentPage"
       v-model:page-size="_pageSize"
       :page-sizes="_pageSizes"
       :total="total"
       v-bind="$attrs"
-      small
       :layout="layout"
       :background="background"
       @size-change="handleSizeChange"
@@ -17,7 +16,7 @@
 </template>
 
 <script setup>
-  import { defineProps, defineEmits, computed } from "vue";
+  import { computed } from "vue";
   import szdStoreSession from "../../common/store/storeSession";
 
   const props = defineProps({
@@ -120,6 +119,10 @@
     height: 50px;
     padding: 10px;
     box-sizing: border-box;
+
+    :deep(.el-select__wrapper) {
+      text-align: center;
+    }
   }
 
   .pagination-container .el-pagination {

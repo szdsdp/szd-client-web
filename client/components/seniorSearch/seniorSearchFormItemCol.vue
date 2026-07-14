@@ -2,7 +2,7 @@
   <el-col :span="span">
     <el-form-item :label="_label" :label-width="labelWidth" :prop="prop" :required="required">
       <template v-if="helpTip" #label>
-        <div>
+        <div class="main-form-label">
           <span>{{ _label }}</span>
           <el-icon class="main-help-tip">
             <QuestionFilled @click.prevent.stop="handleHelpTip" />
@@ -14,7 +14,7 @@
   </el-col>
 </template>
 <script setup>
-  import { defineProps, defineEmits, computed } from "vue";
+  import { computed } from "vue";
   import { $t } from "../../common/utils/globalConfig";
   import szdTool from "../../common/tools/tool";
 

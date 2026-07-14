@@ -1,14 +1,15 @@
 import { ElMessage } from "element-plus";
-import { $t } from "../utils/globalConfig";
+import { $mR } from "../utils/globalConfig";
 
 /**
  * 检查是否是空, 提示消息
  * @param val 检查的对象
- * @param {String} msg 报错消息
+ * @param {String,Array} msg 报错消息
+ * @return {Boolean} 返回true为空，false不为空
  */
 function nullMsg(val, msg) {
   if (!val) {
-    if (msg) ElMessage.error(msg);
+    showMsg(msg, false);
     return true;
   } else {
     return false;
@@ -16,16 +17,26 @@ function nullMsg(val, msg) {
 }
 
 /**
- * 检查是否是空并翻译消息, 提示消息，
+ * 检查是否是空并翻译消息, 提示消息
  * @param val 检查的对象
- * @param {String} msg 报错消息
+ * @param  {String,Array} msg 报错消息
+ * @return {Boolean} 返回true为空，false不为空
  */
 function nullMsg$t(val, msg) {
   if (!val) {
-    if (msg) ElMessage.error($t(msg));
+    showMsg(msg, true);
     return true;
   } else {
     return false;
+  }
+}
+
+/** 输出消息 **/
+function showMsg(msg, t) {
+  if (!msg) return;
+  let _msg = $mR(msg, t);
+  if (_msg) {
+    ElMessage.error(_msg);
   }
 }
 

@@ -1,6 +1,7 @@
-import { btnCheck, consume, init, nextUser, retInfo, setWfAppTool, wfInfo } from "./js/wfTool";
-import { shBT, shBTS, shDyId } from "./js/wfShHelp";
-import { eisAtt, eisImg, goDoc, goVch, goPrint, goPrintBatch, getUrlParams } from "./js/wfRouter";
+import { btnCheck, consume, init, nextUser, retInfo, retMsg, setWfAppTool, vchView, wfEvtInit, wfInfo } from "./js/wfTool";
+import { shBsubDef, shBsubList, shBT, shBTS, shDyId } from "./js/wfShHelp";
+import { eisAtt, eisImg, goDoc, goDocId, goPrint, goPrintBatch, getUrlParams, replaceUrl } from "./js/wfRouter";
+import { goNav, goNavDg } from "../common/utils/goRouter";
 
 export const szdWf = {
   init,
@@ -8,19 +9,28 @@ export const szdWf = {
   wfInfo,
   retInfo,
   nextUser,
+  wfEvtInit,
   consume,
+  retMsg,
+  vchView,
   //路由相关
   getUrlParams,
   goDoc,
+  goDocId,
   goPrint,
   goPrintBatch,
   eisImg,
   eisAtt,
-  goVch,
+  replaceUrl,
   //搜索帮助
   shBT,
   shBTS,
-  shDyId
+  shDyId,
+  shBsubDef,
+  shBsubList,
+  //路由
+  goNav,
+  goNavDg
 };
 
 const installWfFunction = app => {

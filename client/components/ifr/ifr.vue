@@ -11,7 +11,7 @@
   import { $m } from "../../common/utils/globalConfig";
   import szdRouter from "../../common/utils/goRouter";
   import szdStoreSession from "../../common/store/storeSession";
-  import szdStoreLocal from "../../common/store/storeLocal";
+  import szdStoreCookie from "../../common/store/storeCookie";
   //系统代码
   const SYS_CODE = process.env.VUE_APP_SYS_CODE;
   const env = process.env.VUE_APP_SYS_ENV;
@@ -87,7 +87,7 @@
     let entry = app.sysWebIp;
     // 本地调用
     if (env === "development") {
-      const devParam = szdStoreLocal.getDev();
+      const devParam = szdStoreCookie.getDev();
       console.warn("调用本地qiankun-参数配置", devParam);
       if (devParam && devParam.devIp && devParam.devIp[app.sysCode] && devParam.devIp[app.sysCode].vuePort && devParam.devIp[app.sysCode].vueActive) {
         entry = "http://localhost:" + devParam.devIp[app.sysCode].vuePort;
@@ -107,29 +107,6 @@
 </script>
 
 <style scoped lang="scss">
-  :deep(.el-dialog) {
-    width: auto;
-    height: auto;
-
-    .el-dialog__header {
-      padding: 0;
-      margin-right: 0;
-    }
-
-    .el-dialog__body {
-      padding: 0.8rem 1.4rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      > div {
-        color: #000;
-        font-size: 0.24rem;
-        font-weight: 500;
-      }
-    }
-  }
-
   :deep(.g-render) {
     > * {
       padding: 0 !important;

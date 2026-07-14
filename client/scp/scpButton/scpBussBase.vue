@@ -36,12 +36,9 @@
 </template>
 
 <script setup>
-  import { defineExpose, ref } from "vue";
-  import { useRoute } from "vue-router";
+  import { ref } from "vue";
   import szdRouter from "../../common/utils/goRouter";
   import { $t } from "../../common/utils/globalConfig";
-  //当前路由
-  const route = useRoute();
   //功能参数
   const dg = ref({
     open: false
@@ -50,7 +47,7 @@
   const bussBaseObj = ref({});
 
   //接受并处理
-  const acceptData = bussBase => {
+  const callFmDgBussBase = bussBase => {
     bussBaseObj.value = bussBase;
     dg.value.open = true;
   };
@@ -67,6 +64,6 @@
 
   //定义父组件可用方法
   defineExpose({
-    acceptData
+    callFmDgBussBase
   });
 </script>

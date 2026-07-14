@@ -3,14 +3,18 @@ import { $m } from "../utils/globalConfig";
 //存储登录用户信息
 const coreLoginKey = "SZDCORE-Admin-CoreLogin";
 
-/** 获取登录session
- * loginUser:{
+/**
+ * 获取登录Session
+ * @return {Object} loginUser 返回对象
+ * {
  *  token,
+ *  appWeb, //app端访问
  *  user, //用户
  *  menus, //展示菜单
  *  routesObj, //路由
  *  sysMicro, //微应用
  *  webParams, //web参数
+ *  autocomplete, //自动补全
  *  homeConfig, //主题配置
  *  perParams //个人参数
  * }
@@ -19,14 +23,18 @@ function getCoreLogin() {
   return JSON.parse(sessionStorage.getItem(coreLoginKey));
 }
 
-/** 设置登录session
+/**
+ * 设置登录Session
+ * @param {Object} loginUser 设置Session
  * {
  *  token,
+ *  appWeb, //app端访问
  *  user, //用户
  *  menus, //展示菜单
  *  routesObj, //路由
  *  sysMicro, //微应用
  *  webParams, //web参数
+ *  autocomplete, //自动补全
  *  homeConfig, //主题配置
  *  perParams //个人参数
  * }
@@ -82,14 +90,17 @@ function removeLock() {
 }
 
 /*************************************************
- * 获取web端参数
+ * 获取Web端参数 【在全局参数中 CORE_SYS_WEB 配置】
+ * @param {String} key 参数键值
+ * @param {Boolean} showError 未配置显示错误消息
+ * @return {String} 返回参数
  */
 function getWebParams(key, showError = true) {
-  const webParams = JSON.parse(sessionStorage.getItem(coreLoginKey)).webParams;
-  if (webParams[key]) {
+  const webParams = JSON.parse(sessionStorage.getItem(coreLoginKey))?.webParams;
+  if (webParams && webParams[key]) {
     return webParams[key];
   } else {
-    if (showError) {
+    if (showError && webParams) {
       $m("CORE_CLIENT.E025", key); //获取web端参数 & 不存在
     }
   }

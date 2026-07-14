@@ -1,9 +1,10 @@
 import request from "../../common/utils/request";
+import requestNoLoading from "../../common/utils/requestNoLoading";
 
 //搜索帮助-配置
 export function searchHelpParams(baseField) {
   return request({
-    url: "/core/dev/baseField/sh/" + baseField + "/pc",
+    url: "/core/dev/baseField/sh/" + baseField,
     method: "get"
   });
 }
@@ -38,7 +39,15 @@ export function delCommonValues(data) {
 //搜索帮助-数据同步
 export function syncMdm(baseField) {
   return request({
-    url: "/core/common/sh/sync/" + baseField + "/" + "PC",
+    url: "/core/common/sh/sync/" + baseField,
+    method: "get"
+  });
+}
+
+//自动补全列表
+export function getAutocompleteList(baseField, val) {
+  return requestNoLoading({
+    url: "/core/dev/baseField/autocomplete/" + baseField + "/" + val,
     method: "get"
   });
 }

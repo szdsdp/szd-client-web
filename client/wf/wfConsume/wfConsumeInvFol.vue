@@ -1,5 +1,5 @@
 <template>
-  <div class="app-sub-container szd__tb__wrapper">
+  <div class="app-sub-container szd__tb__wrapper" style="padding: 0">
     <!-- 查询条件 -->
     <el-form :model="query" ref="queryForm" class="app-el-form">
       <el-row>
@@ -7,12 +7,13 @@
           label="所属票夹"
           v-model="query.folderId"
           showHelp
-          @help="szdSh({ a: 'SEIS_FOL_FOL', b: query, c: ['folderId', 'folderName'] })"
+          :help="{ a: 'SEIS_FOL_FOL', b: query, c: ['folderId'] }"
           :span="8" />
-        <szd-input-form-item-col label="附件名称" v-model="query.attachName" :span="8"/>
-        <szd-date-form-item-col label="上传时间" v-model="query.date" type="daterange" :span="8"/>
+        <szd-input-form-item-col label="附件名称" v-model="query.attachName" :span="8" />
+        <szd-date-form-item-col label="上传日期" v-model="query.date" type="daterange" :span="8" />
       </el-row>
     </el-form>
+
     <!-- 功能按钮 -->
     <div class="main-button">
       <div class="main-button-left" style="width: 50%"></div>
@@ -21,74 +22,64 @@
         <szd-button label="重置" type="primary" icon="Refresh" @click="resetQuery" />
       </div>
     </div>
-    <!-- 表格输出 -->
-    <el-table border stripe :data="objData.invFol" @selection-change="handleSelRow" class="flex-1">
+    <el-table border stripe :data="_objData.invFol" @selection-change="handleSelRow" :span-method="handleSpanMethod" class="flex-1">
       <el-table-column align="center" type="selection" width="40" />
-      <el-table-column :label="$t('附件ID')" prop="attachId" min-width="170" />
+      <wfConsumeInvColCat :bussParam="bussParam" />
       <el-table-column :label="$t('附件名称')" prop="attachName" min-width="150" />
-
-      <wfConsumeInvColCat :bussBase="bussBase" />
-
-      <el-table-column :label="$t('所属票夹')" prop="folderId" min-width="170">
-        <template v-slot="scope">
-          {{ scope.row.folderId + "." + scope.row.folderName }}
-        </template>
-      </el-table-column>
+      <el-table-column :label="$t('所属票夹')" prop="folderName" min-width="170" />
       <el-table-column :label="$t('上传时间')" prop="createTime" min-width="170" />
     </el-table>
   </div>
 </template>
 
 <script setup>
-  import { defineProps, onMounted, ref } from "vue";
+  import { computed, onMounted, ref } from "vue";
   import { $t } from "../../common/utils/globalConfig";
   import wfConsumeInvColCat from "./wfConsumeInvColCat.vue";
   import { wfEisConsumeFol } from "../api/wfComsume";
 
+  const emit = defineEmits(["update:objData"]);
+
   const props = defineProps({
-    //业务主体
-    bussBase: {
+    bussParam: {
       type: Object
     },
-    //业务主体
     objData: {
       type: Object,
       default: {}
     }
   });
 
+  const _objData = computed({
+    get: () => props.objData,
+    set: val => {
+      emit("update:objData", val);
+    }
+  });
+
   const query = ref({
+    bussId: "",
+    bstp: "",
+    invList: [],
     folderId: "",
-    folderName: "",
     attachName: "",
     date: []
   });
 
+  const mergeRow = ref([]);
+
   onMounted(() => {
-    initData();
+    resetQuery();
   });
 
   const initData = () => {
+    query.value.bussId = "";
+    query.value.bstp = "";
+    query.value.invList = [];
     query.value.folderId = "";
-    query.value.folderName = "";
     query.value.attachName = "";
     query.value.date = [];
-  };
-
-  //查询数据
-  const handleQuery = () => {
-    query.value.startTime = null;
-    query.value.endTime = null;
-    if (query.value.date && query.value.date.length > 0) {
-      query.value.startTime = query.value.date[0];
-      query.value.endTime = query.value.date[1];
-    }
-    wfEisConsumeFol(props.bussBase.bussId, query.value).then(res => {
-      if (res.code === 200) {
-        props.objData.invFol = res.data;
-        // setRowSpans();
-      }
-    });
+    mergeRow.value = [];
   };
 
   //重置
@@ -97,41 +88,57 @@
     handleQuery();
   };
 
-  const handleSelRow = selection => {
-    props.objData.invFolSel = selection;
+  //查询数据
+  const handleQuery = () => {
+    query.value.bussId = props.bussParam.bussId;
+    query.value.bstp = props.bussParam.bstp;
+    query.value.invList = props.bussParam.invList;
+    query.value.startTime = null;
+    query.value.endTime = null;
+    if (query.value.date && query.value.date.length > 0) {
+      query.value.startTime = query.value.date[0];
+      query.value.endTime = query.value.date[1];
+    }
+    wfEisConsumeFol(query.value).then(res => {
+      if (res.code === 200) {
+        _objData.value.invFol = res.data;
+        setRowSpans();
+      }
+    });
   };
 
-  //构造合并数据
+  //设置合并行数据
   const setRowSpans = () => {
-    // 先给所有的数据都加一个v.rowspan = 1
-    let i = 0;
-    props.objData.invFol.forEach(v => {
-      v.index = i;
-      v.rowspan = 1;
-      i++;
-    });
-    // 双层循环
-    for (let i = 0; i < props.objData.invFol.length; i++) {
-      // 就把当前v.rowspan + 1
-      // 下一行的v.rowspan - 1
-      for (let j = i + 1; j < props.objData.invFol.length; j++) {
-        //此处可根据相同字段进行合并，此处是根据的id
-        if (props.objData.invFol[i].attachId === props.objData.invFol[j].attachId) {
-          props.objData.invFol[i].rowspan++;
-          props.objData.invFol[j].rowspan--;
+    let rowspan = 0;
+    let attachId = "";
+    for (let i = 0; i < _objData.value.invFol.length; i++) {
+      let item = _objData.value.invFol[i];
+      if (i === 0) {
+        attachId = item.attachId;
+        rowspan = 1;
+      } else {
+        if (attachId === item.attachId) {
+          rowspan++;
         } else {
-          break;
+          mergeRow.value.push({ rowIndex: i, rowspan: rowspan });
+          attachId = item.attachId;
+          rowspan = 1;
         }
       }
-      // 这里跳过已经重复的数据
-      i = i + props.objData.invFol[i].rowspan - 1;
     }
   };
 
-  const handleSpanMethod = ({ row, columnIndex }) => {
-    let num = 2;
-    if (columnIndex <= num) {
-      return { rowspan: row.rowspan, colspan: 1 };
+  const handleSelRow = selection => {
+    _objData.value.invFolSel = selection;
+  };
+
+  //合并行
+  const handleSpanMethod = ({ rowIndex, column }) => {
+    if (["attachName", "folderName", "createTime"].includes(column.property) && mergeRow.value.length > 0) {
+      const _merge = mergeRow.value.find(r => r.rowIndex === rowIndex);
+      if (_merge) {
+        return { rowspan: _merge.rowspan, colspan: 1 };
+      }
     }
   };
 </script>

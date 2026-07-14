@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-  import { computed, defineEmits, defineExpose, defineProps, ref } from "vue";
+  import { computed, ref } from "vue";
   import { $t } from "../../../common/utils/globalConfig";
   import tableLayoutFilter from "./tableLayoutFilter.vue";
   import { initDataLayout, setSelData } from "../js/tableLayout";

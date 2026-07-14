@@ -8,7 +8,7 @@
 </template>
 
 <script setup>
-  import { defineExpose, ref } from "vue";
+  import { ref } from "vue";
   import _ from "lodash";
   import { initStatsLay, initLayVarDef, initLayStats } from "./js/statsParam";
   import { statsData } from "./js/stats";

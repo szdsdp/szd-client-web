@@ -10,7 +10,15 @@
     destroy-on-close
     draggable>
     <div v-szd-dialog="[860, 560]" />
-
+    <!-- 功能按钮 -->
+    <div class="main-table-title">
+      <div class="main-table-title-left flex-1">
+        <span>{{ $t("变式KEY(可用于AI Skill技能绑定)") + "：" + _lay.layout.report }}</span>
+      </div>
+      <div class="main-table-title-right">
+        <szd-button label="创建变式" type="primary" link icon="Plus" @click="handleSavaVar" />
+      </div>
+    </div>
     <!-- 表格输出 -->
     <el-table ref="refTable1" border stripe :data="layList" class="flex-1">
       <el-table-column prop="variant" :label="$t('变式代码')" min-width="100">
@@ -37,8 +45,7 @@
     </el-table>
     <!--  footer区域 -->
     <template #footer>
-      <el-button type="primary" @click="handleSavaVar"> {{ $t("创建变式") }}</el-button>
-      <el-button type="primary" @click="handleClose"> {{ $t("关闭") }}</el-button>
+      <szd-button label="关闭" type="primary" @click="handleClose" />
     </template>
     <!-- 保存变式 -->
     <schLayoutVar ref="refSchLayoutVar" :_lay="_lay" @layout-var="handleLayoutVar" />
@@ -46,7 +53,7 @@
 </template>
 
 <script setup>
-  import { computed, defineEmits, defineExpose, defineProps, nextTick, ref } from "vue";
+  import { computed, nextTick, ref } from "vue";
   import _ from "lodash";
   import { $m, $t } from "../../../common/utils/globalConfig";
   import { getVarList, saveVariant, delVariant } from "../../api/seniorSearch";

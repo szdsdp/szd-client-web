@@ -1,11 +1,20 @@
 <template>
-  <el-button v-if="!_fst.hide" :type="type" :text="text" :link="link" :disabled="_fst.disabled" :icon="icon" :color="color" @click="emit('click')">
+  <el-button
+    v-if="!_fst.hide"
+    :type="type"
+    :text="text"
+    :link="link"
+    :disabled="_fst.disabled"
+    :icon="icon"
+    :color="color"
+    @click="emit('click')"
+    :class="label ? '' : 'l-button'">
     {{ $t(label) }}
   </el-button>
 </template>
 
 <script setup>
-  import { defineProps, defineEmits, computed } from "vue";
+  import { computed } from "vue";
   import { $t } from "../../common/utils/globalConfig";
   import szdComp from "../../common/utils/component";
 
@@ -50,10 +59,18 @@
   const emit = defineEmits(["click"]);
   //编辑状态
   const _fst = computed(() => {
+    let fst = szdComp.getCompFst(props.szdfst, props.szdopt, props.disabled);
     if (props.noAuth) {
-      return { readonly: false, disabled: false, hide: false };
-    } else {
-      return szdComp.getCompFst(props.szdfst, props.szdopt, props.disabled);
+      fst.readonly = false;
+      fst.disabled = false;
     }
+    return fst;
   });
 </script>
+<style lang="scss" scoped>
+  .l-button {
+    > :deep(span) {
+      margin-left: 0;
+    }
+  }
+</style>

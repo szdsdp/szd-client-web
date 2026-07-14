@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-  import { computed, defineProps } from "vue";
+  import { computed } from "vue";
   import vkbeautify from "vkbeautify";
   import "highlight.js/styles/github.css";
   import hljs from "highlight.js";
@@ -75,7 +75,7 @@
       overflow: auto;
       margin: 0;
       word-break: keep-all;
-      background: #f8f8f8;
+      //background: #f8f8f8;
 
       > code {
         overflow: visible;

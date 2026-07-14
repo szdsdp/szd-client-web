@@ -1,148 +1,166 @@
 <template>
-  <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-main-form">
+  <el-form ref="refUserLoginForm" :model="loginForm" :rules="loginRules" class="login-main-form">
     <el-form-item prop="userId">
-      <el-input v-model="loginForm.userId" text auto-complete="off" placeholder="账号">
+      <el-input v-model="loginForm.userId" autocomplete="off" :placeholder="tranLanguage('请输入用户名')" @change="handleChangeUserId()">
         <template #prefix>
-          <szd-svg name="user" fixed class="el-input__icon input-icon" />
+          <szd-svg name="user" class="el-input__icon input-icon" fixed />
         </template>
       </el-input>
     </el-form-item>
     <el-form-item prop="password">
-      <el-input v-model="loginForm.password" type="password" auto-complete="off" placeholder="密码">
+      <el-input v-model="loginForm.password" type="password" autocomplete="off" :placeholder="tranLanguage('请输入密码')">
         <template #prefix>
-          <szd-svg name="password" fixed class="el-input__icon input-icon" />
+          <szd-svg name="password" class="el-input__icon input-icon" fixed />
         </template>
       </el-input>
     </el-form-item>
-    <el-form-item prop="code">
-      <el-input v-model="loginForm.code" auto-complete="off" placeholder="验证码" style="width: 63%">
+    <el-form-item prop="code" v-if="config.captcha">
+      <el-input v-model="loginForm.code" autocomplete="off" :placeholder="tranLanguage('验证码')" style="width: 63%">
         <template #prefix>
-          <szd-svg name="validCode" fixed class="el-input__icon input-icon" />
+          <szd-svg name="validCode" class="el-input__icon input-icon" fixed />
         </template>
       </el-input>
       <div class="login-code">
         <img :src="dg.codeUrl" @click="getCode" />
       </div>
     </el-form-item>
-    <el-checkbox v-model="loginForm.rememberMe" style="margin: 0 0 25px 0">记住密码</el-checkbox>
+    <el-checkbox v-model="loginForm.rememberMe" style="margin: 0 0 25px 0">{{ tranLanguage("记住密码") }}</el-checkbox>
     <el-form-item style="width: 100%">
-      <el-button
-        :loading="dg.loading"
-        size="default"
-        type="primary"
-        style="width: 100%; height: 36px"
-        @click="handleLogin"
-        @keydown.enter="keyDown(e)">
-        <span v-if="!dg.loading">登 录</span>
-        <span v-else>登 录 中...</span>
+      <el-button :loading="dg.loading" size="default" type="primary" style="width: 100%; height: 36px" @click="handleLogin">
+        <span v-if="!dg.loading">{{ tranLanguage("登 录") }}</span>
+        <span v-else>{{ tranLanguage("登 录 中") }}...</span>
       </el-button>
     </el-form-item>
   </el-form>
 </template>
 
-<script>
-  import { getCodeImg, login } from "../../client/common/api/login";
+<script setup>
+  import { computed, onBeforeMount, onMounted, onUnmounted, ref } from "vue";
   import Cookies from "js-cookie";
   import { encrypt, decrypt } from "./jsencrypt.js";
-  import szdStoreSession from "../../client/common/store/storeSession";
-  import storeCookie from "../../client/common/store/storeCookie";
+  import { getCodeImg, login } from "../../client/common/api/login";
 
-  export default {
-    data() {
-      return {
-        dg: {
-          loading: false, //加载中
-          codeUrl: "", //验证码地址
-          loginType: "1"
-        },
-        loginForm: {
-          userId: "",
-          password: "",
-          rememberMe: false,
-          code: "",
-          uuid: ""
-        },
-        loginRules: {
-          userId: [{ required: true, trigger: "blur", message: "用户名不能为空" }],
-          password: [{ required: true, trigger: "blur", message: "密码不能为空" }],
-          code: [{ required: true, trigger: "change", message: "验证码不能为空" }]
-        }
-      };
+  const emit = defineEmits(["loginResult"]);
+
+  const refUserLoginForm = ref();
+
+  const props = defineProps({
+    config: {
+      type: Object
     },
-    mounted() {
-      window.addEventListener("keydown", this.keyDown); //绑定监听事件
+    mDg: {
+      type: Object
     },
-    destroyed() {
-      window.removeEventListener("keydown", this.keyDown, false); //销毁事件
-    },
-    created() {
-      this.getCode();
-      this.getCookie();
-    },
-    methods: {
-      initData(type) {
-        this.dg.loginType = type;
-      },
-      keyDown(e) {
-        if (e.keyCode == 13 || e.keyCode == 100) {
-          this.handleLogin();
-        }
-      },
-      //验证码地址
-      getCode() {
-        getCodeImg().then(res => {
-          this.dg.codeUrl = "data:image/gif;base64," + res.img;
-          this.loginForm.uuid = res.uuid;
-        });
-      },
-      //获取Cookie信息
-      getCookie() {
-        const userId = Cookies.get("userId");
-        const password = Cookies.get("password");
-        const rememberMe = Cookies.get("rememberMe");
-        this.loginForm = {
-          userId: userId === undefined ? this.loginForm.userId : userId,
-          password: password === undefined ? this.loginForm.password : decrypt(password),
-          rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
-        };
-      },
-      //登录系统
-      handleLogin() {
-        if (this.dg.loginType !== "1") return;
-        this.$refs.loginForm.validate(valid => {
-          if (valid) {
-            this.dg.loading = true;
-            //设置cookie
-            this.setCookie();
-            //系统登录
-            login(this.loginForm).then(res => {
-              if (res.code === 200) {
-                szdStoreSession.removeCoreLogin();
-                storeCookie.setToken(res.token); //给token赋值
-                location.reload(); //重新加载当前页面
-              } else {
-                this.getCode();
-              }
-              this.dg.loading = false;
-            });
-          }
-        });
-      },
-      //设置cookie
-      setCookie() {
-        if (this.loginForm.rememberMe) {
-          Cookies.set("userId", this.loginForm.userId, { expires: 30 });
-          Cookies.set("password", encrypt(this.loginForm.password), { expires: 30 });
-          Cookies.set("rememberMe", this.loginForm.rememberMe, { expires: 30 });
-        } else {
-          Cookies.remove("userId");
-          Cookies.remove("password");
-          Cookies.remove("rememberMe");
-        }
+    bindThird: {
+      type: Object
+    }
+  });
+  //窗口参数
+  const dg = ref({
+    loading: false, //加载中
+    codeUrl: "" //验证码地址
+  });
+  //表单对象
+  const loginForm = ref({
+    userId: "",
+    password: "",
+    rememberMe: false,
+    code: "",
+    uuid: "",
+    appOpenUuid: ""
+  });
+  //检查规则
+  const loginRules = computed(() => {
+    return {
+      userId: [{ required: true, trigger: "blur", message: tranLanguage("用户名不能为空") }],
+      password: [{ required: true, trigger: "blur", message: tranLanguage("密码不能为空") }],
+      code: [{ required: true, trigger: "change", message: tranLanguage("验证码不能为空") }]
+    };
+  });
+
+  onMounted(() => {
+    window.addEventListener("keydown", keyDown); //绑定监听事件
+  });
+  onUnmounted(() => {
+    window.removeEventListener("keydown", keyDown); //销毁事件
+  });
+  //初始参数
+  onBeforeMount(() => {
+    if (props.config.captcha) {
+      getCode();
+    }
+    getCookie();
+  });
+  //键盘事件
+  const keyDown = e => {
+    if (e.key === "Enter") handleLogin();
+  };
+  //验证码地址
+  const getCode = () => {
+    getCodeImg().then(res => {
+      dg.value.codeUrl = "data:image/gif;base64," + res.img;
+      loginForm.value.uuid = res.uuid;
+    });
+  };
+  //获取Cookie信息
+  const getCookie = () => {
+    const userId = Cookies.get("userId");
+    const password = Cookies.get("password");
+    const rememberMe = Cookies.get("rememberMe");
+    if (userId) loginForm.value.userId = userId;
+    if (password) loginForm.value.password = decrypt(password);
+    if (rememberMe) loginForm.value.rememberMe = true;
+    loginForm.value.code = "";
+    loginForm.value.uuid = "";
+    props.mDg.userId = loginForm.value.userId;
+  };
+  //登录系统
+  const handleLogin = () => {
+    refUserLoginForm.value.validate(valid => {
+      if (valid) {
+        setCookie();
+        dg.value.loading = true;
+        loginForm.value.appOpenUuid = props.bindThird.appOpenUuid;
+        login(loginForm.value)
+          .then(res => {
+            if (res.code === 200) {
+              emit("loginResult", res);
+            } else {
+              getCode();
+            }
+          })
+          .finally(() => {
+            dg.value.loading = false;
+          });
       }
+    });
+  };
+  //设置cookie
+  const setCookie = () => {
+    if (loginForm.value.rememberMe) {
+      Cookies.set("userId", loginForm.value.userId, { expires: 30 });
+      Cookies.set("password", encrypt(loginForm.value.password), { expires: 30 });
+      Cookies.set("rememberMe", loginForm.value.rememberMe, { expires: 30 });
+    } else {
+      Cookies.remove("userId");
+      Cookies.remove("password");
+      Cookies.remove("rememberMe");
+    }
+  };
+  //更新用户
+  const handleChangeUserId = () => {
+    props.mDg.userId = loginForm.value.userId;
+  };
+  //语言翻译
+  const tranLanguage = t => {
+    if (props.config.langTxt && props.config.langTxt[props.mDg.language] && props.config.langTxt[props.mDg.language][t]) {
+      return props.config.langTxt[props.mDg.language][t];
+    } else {
+      return t;
     }
   };
 </script>
+
 <style lang="scss" scoped>
   .login-main-form {
     border-radius: 5px;

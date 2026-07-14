@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-  import { defineExpose, ref } from "vue";
+  import { ref } from "vue";
   //功能参数
   const dg = ref({
     open: false,

@@ -1,20 +1,22 @@
-<template lang="html">
+<template>
   <div :val="value_">
-    <div>
-      <el-radio v-model="type" label="1" size="default" border>{{ $t("每年") }}</el-radio>
+    <div class="l-row-rd">
+      <el-radio v-model="type" label="1">{{ $t("每年") }}</el-radio>
     </div>
-    <div>
-      <el-radio v-model="type" label="2" size="default" border>{{ $t("周期") }}</el-radio>
+    <div class="l-row-rd">
+      <el-radio v-model="type" label="2">{{ $t("周期") }}</el-radio>
       <span style="margin-left: 10px; margin-right: 5px">{{ $t("从") }}</span>
-      <el-input-number @change="type = '2'" v-model="cycle.start" :min="2000" size="default"></el-input-number>
+      <el-input-number @change="type = '2'" v-model="cycle.start" :min="2000" style="width: 150px" />
       <span style="margin-left: 5px; margin-right: 5px">{{ $t("至") }}</span>
-      <el-input-number @change="type = '2'" v-model="cycle.end" :min="2000" size="default"></el-input-number>
-      年
+      <el-input-number @change="type = '2'" v-model="cycle.end" :min="2000" style="width: 150px" />
+      {{ $t("年") }}
     </div>
   </div>
 </template>
 
 <script>
+  import { $t } from "../../../common/utils/globalConfig";
+
   export default {
     props: {
       modelValue: {
@@ -26,18 +28,18 @@
       let year = new Date().getFullYear();
       return {
         type: "1", // 类型
+        // 周期
         cycle: {
-          // 周期
           start: year,
           end: year
         },
+        // 循环
         loop: {
-          // 循环
           start: 0,
           end: 0
         },
+        // 指定周
         week: {
-          // 指定周
           start: 0,
           end: 0
         },
@@ -80,6 +82,7 @@
       }
     },
     methods: {
+      $t,
       updateVal(nv) {
         if (!nv) {
           return;
@@ -131,8 +134,15 @@
   };
 </script>
 
-<style lang="css" scoped>
+<style lang="scss" scoped>
   .el-checkbox + .el-checkbox {
     margin-left: 10px;
+  }
+
+  .l-row-rd {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 3px 0;
   }
 </style>

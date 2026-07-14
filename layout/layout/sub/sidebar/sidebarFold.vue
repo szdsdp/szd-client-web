@@ -19,7 +19,6 @@
 </template>
 
 <script setup>
-  import { defineProps } from "vue";
   import store from "~store";
 
   const props = defineProps({

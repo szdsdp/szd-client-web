@@ -2,14 +2,24 @@
 import Cookies from "js-cookie";
 import szdStoreSession from "./storeSession";
 
+/*************************************************
+ * token
+ */
+
 const tokenKey = "SZDCORE-Admin-Token";
 
-/** 获取登录token */
+/**
+ * 获取登录token
+ * @return {String} 返回路由代码
+ */
 function getToken() {
   return Cookies.get(tokenKey);
 }
 
-/** 设置登录token */
+/**
+ * 设置登录token
+ * @param {String} token 传入token
+ */
 function setToken(token) {
   Cookies.set(tokenKey, token);
 }
@@ -20,10 +30,17 @@ function removeToken() {
   szdStoreSession.removeLock();
 }
 
-const const_language = "language";
+/*************************************************
+ * 登录语言
+ */
+
+const const_language = "SZDCORE-Language";
 let language_val;
 
-/** 获取登录语言 */
+/**
+ * 获取登录语言
+ * @return {String} 返回语言代码
+ */
 function getLanguage() {
   if (!language_val) {
     language_val = Cookies.get(const_language);
@@ -35,13 +52,18 @@ function getLanguage() {
   return language_val;
 }
 
-/** 设置登录语言 */
+/**
+ * 设置登录语言
+ * @param {String} language 语言代码
+ */
 function setLanguage(language) {
   language_val = language ? language : "zh-CN";
-  Cookies.set(const_language, language_val, { expires: 30, SameSite: 'Strict', httpOnly:true });
+  Cookies.set(const_language, language_val, { expires: 30, SameSite: "Strict" });
 }
 
-/** 外围系统token赋值 */
+/*************************************************
+ * 外围系统token赋值
+ */
 function setTokenOther(loginOther) {
   if (loginOther) {
     try {
@@ -55,13 +77,37 @@ function setTokenOther(loginOther) {
   }
 }
 
+/*************************************************
+ * dev PC开发参数设置
+ */
+
+/** dev */
+const szdDev = "szdDevPc";
+
+/** 获取dev */
+function getDev() {
+  const dbDev = Cookies.get(szdDev);
+  return dbDev ? JSON.parse(dbDev) : {};
+}
+
+/** 设置dev */
+function setDev(val) {
+  if (!val || Object.keys(val).length === 0) {
+    Cookies.remove(szdDev);
+  } else {
+    Cookies.set(szdDev, JSON.stringify(val));
+  }
+}
+
 const szdStoreCookie = {
   getToken,
   setToken,
   removeToken,
   getLanguage,
   setLanguage,
-  setTokenOther
+  setTokenOther,
+  getDev,
+  setDev
 };
 
 export default szdStoreCookie;

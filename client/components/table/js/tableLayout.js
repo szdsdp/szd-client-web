@@ -32,6 +32,8 @@ function initColCatImp(fCatCol) {
           hide: fCat.hide, //隐藏
           doSum: "", //统计规则
           fixed: "", //固定列
+          width: fCat.width, //宽度
+          minWidth: fCat.minWidth, //最小宽度
           align: "", //对齐方式
           children: colCatChild,
           //内部参数
@@ -49,7 +51,10 @@ function initColCatImp(fCatCol) {
         hide: fCat.hide, //隐藏
         doSum: fCat.doSum, //统计规则
         fixed: fCat.fixed ? fCat.fixed : "", //固定列
+        width: fCat.width, //宽度
+        minWidth: fCat.minWidth, //最小宽度
         align: fCat.align, //对齐方式
+        exportSplit: fCat.exportSplit, //数据导出分割符
         //内部参数
         $SZDId: fCat.field,
         $SZDPos: 0, //输出位置
@@ -167,6 +172,7 @@ function initFilterObjImp(filterObj, fCatCol) {
         numDec: item.numDec,
         //[基础字段-单值,要回填的字段-单值,查询条件(数组)]
         help: item.ctrlParam && item.ctrlParam.baseField ? [item.ctrlParam.baseField, item.ctrlParam.baseMapping, ""] : [],
+        whereOpt: item.whereOpt, //字符串查询规则操作符
         show: true //显示未选中的字段
       });
     }
@@ -205,6 +211,9 @@ function setSelDataColCat(fCatCol, colCat) {
         fCat.doSum = colCatItem.doSum;
         fCat.fixed = colCatItem.fixed === "left" || colCatItem.fixed === "right" ? colCatItem.fixed : false;
         fCat.align = colCatItem.align;
+        fCat.width = colCatItem.width && colCatItem.width > 0 ? colCatItem.width : fCat.width;
+        fCat.minWidth = colCatItem.minWidth && colCatItem.minWidth > 0 ? colCatItem.minWidth : fCat.minWidth;
+        fCat.exportSplit = colCatItem.exportSplit ? colCatItem.exportSplit : "";
         fCat.$SZDPos = colCatItem.$SZDPos;
       }
     } else {

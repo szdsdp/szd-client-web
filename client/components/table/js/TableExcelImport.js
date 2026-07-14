@@ -5,9 +5,9 @@ import { szdMsgBox } from "../../msgBox/msgBox";
 
 export function excelUploadProc(lay, objData, uplData) {
   //表头设置
-  const colHead = getExcelHeader(lay.value.fCatCol, true);
+  const colHead = getExcelHeader(lay.fCatCol, true);
   //数据列字段
-  let colFCat = Object.keys(lay.value.fCatUse);
+  let colFCat = Object.keys(lay.fCatUse);
   //检查是否有上传数据
   if (uplData.length < colHead.header.length + 1) {
     $m("CORE_CLIENT.W014"); //无需要导入的数据
@@ -28,7 +28,7 @@ export function excelUploadProc(lay, objData, uplData) {
     const item = uplData[i];
     let rowObj = {};
     for (let j = 0; j < colFCat.length; j++) {
-      const fCat = lay.value.fCatUse[colFCat[j]];
+      const fCat = lay.fCatUse[colFCat[j]];
       if (!fCat.$SZDCol) continue;
       //对象添加字段
       if (fCat.type === "number") {
@@ -43,7 +43,7 @@ export function excelUploadProc(lay, objData, uplData) {
   }
   //存在报错，弹出窗口提醒
   if (errorMsg.length === 0) {
-    objData.value.push(...rowData);
+    objData.push(...rowData);
     return true;
   } else {
     szdMsgBox(errorMsg).then(() => {
@@ -55,15 +55,15 @@ export function excelUploadProc(lay, objData, uplData) {
 //导入数据
 function excelUploadCheck(item, rowObj, fCat, errorMsg, rowNum) {
   let l_val = item[fCat.field];
-  if (l_val) {
+  if (l_val || (l_val === 0 && fCat.type === "string")) {
     //存在分割符，数据自动分割
     if (fCat.importSplit) {
-      l_val = l_val.split(fCat.importSplit)[0];
+      l_val = l_val.toString().split(fCat.importSplit)[0];
     }
     //检查数据类型 ["string", "number", "boolean", "date", "datetime", "time", "year", "month", "button", "sub-table"]; //数据类型
     switch (fCat.type) {
       case "string":
-        rowObj[fCat.field] = l_val;
+        rowObj[fCat.field] = l_val.toString();
         break;
       case "number":
         //替换千分位符
@@ -145,7 +145,7 @@ function excelUploadCheck(item, rowObj, fCat, errorMsg, rowNum) {
   } else {
     //检查必输
     if (fCat.required) {
-      errorMsgAdd(errorMsg, $m("CORE_CLIENT.E039", [rowNum, l_val], false, true)); //第 & 行数据对应的字段  & 不能为空
+      errorMsgAdd(errorMsg, $m("CORE_CLIENT.E039", [rowNum, fCat.field + "." + fCat.label], false, true)); //第 & 行数据对应的字段  & 不能为空
     }
   }
 }

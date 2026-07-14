@@ -2,8 +2,8 @@ import store from "~store";
 import _ from "lodash";
 import { setLayVar, setSelData } from "./statsLayout";
 
-const const_type = ["string", "number", "boolean", "date", "datetime", "time", "year", "month", "button", "sub-table"]; //数据类型
-const const_type_align = ["boolean", "date", "datetime", "time", "year", "month"]; //数据类型-居中
+const const_type = ["string", "number", "boolean", "array", "date", "datetime", "time", "year", "month", "svg", "button"]; //数据类型
+const const_type_align_center = ["boolean", "date", "datetime", "time", "year", "month"]; //数据类型-居中
 
 //布局
 export function initStatsLay(layout, fieldCat) {
@@ -34,12 +34,12 @@ function tableLayout(params) {
   return {
     report: params.report ? params.report : "", //程序名称
     varMode: params.varMode === "A" ? "A" : "U", //变式模式：U.仅自己可用，A.所有人可用，默认
-    styleRow: "$SZDStyleRow", //行样式设置字段  表格未维护，直接进行回调
+    styleRow: "$SZDStyleRow", //行样式设置字段，内部使用
     // styleCell: params.styleCell, //单元样式设置字段 表格未维护，直接进行回调
     selection: false, //显示选择列
     showSummary: false, //汇总
     sort: "1", //排序 0.不启用排序 1.前端排序 2后端排序
-    merge: "2", //排序合并单元格 0.不合并 1.按列值相同合并 2.按排序梯次合并
+    merge: ["0", "1", "2"].includes(params.merge) ? params.merge : "2", //排序合并单元格 0.不合并 1.按列值相同合并 2.按排序梯次合并
     filter: true, //过滤 false.不启用过滤 true.前端过滤
     pagination: "0", //分页方式 0.不分页 1.前端分页 2.后端分页
 
@@ -65,7 +65,7 @@ function tableFCat(fieldCat, layout, fCatUse, parent) {
   let fCatCol = [];
   for (let i = 0; i < fieldCat.length; i++) {
     const item = fieldCat[i];
-    if (item.type === "button" || item.type === "sub-table") continue;
+    if (item.type === "button") continue;
     //列字段键值尾款和重复检查
     if (!item.field || !item.label || fCatUse[item.field]) {
       console.error("列字段代码field不能重复和为空，且列名称label不能为空:" + item.field);
@@ -163,7 +163,7 @@ function tableFCatItem(item, layout, parent) {
     fCat.align = item.align;
   } else if (fCat.type === "number") {
     fCat.align = "right";
-  } else if (const_type_align.includes(fCat.type)) {
+  } else if (const_type_align_center.includes(fCat.type)) {
     fCat.align = "center";
   }
 

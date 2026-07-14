@@ -1,9 +1,9 @@
 import request from "../../../client/common/utils/request";
 
 //新增初始化
-export function wfInit(routerCode) {
+export function wfInit(bussType) {
   return request({
-    url: "/core/wf/service/init/" + routerCode,
+    url: "/core/wf/service/init/" + bussType,
     method: "get"
   });
 }
@@ -47,5 +47,48 @@ export function wfMsgList(bussId, nodeDoc) {
   return request({
     url: "/core/wf/per/meet/msg/list/" + bussId + "/" + nodeDoc,
     method: "get"
+  });
+}
+
+//根据业务单号、路由、业务类型 查询业务主体
+export function wfGetBussObj(data) {
+  return request({
+    url: "/core/wf/service/get/bussDocId",
+    method: "post",
+    data: data
+  });
+}
+
+//凭证预览检查
+export function vchCheck(data) {
+  return request({
+    url: "/core/wf/service/vch/check",
+    method: "post",
+    data: data
+  });
+}
+
+//查询默认业务小类
+export function getDefaultBsub(bstp, struct) {
+  return request({
+    url: "/core/sys/bussType/defaultBsub/" + bstp + "/" + struct,
+    method: "get"
+  });
+}
+
+//业务类型配置的业务小类
+export function getBstpBsub(bstp) {
+  return request({
+    url: "/core/sys/bussType/bussSubType/" + bstp,
+    method: "get"
+  });
+}
+
+// 单据催办
+export function wfRemind(data) {
+  return request({
+    url: "/core/wf/service/remind",
+    method: "post",
+    data: data
   });
 }

@@ -2,7 +2,10 @@
 import szdDate from "./tools/date";
 import szdCalc from "./tools/calculate";
 import szdTool from "./tools/tool";
+import szdSapTool from "./tools/sapTool";
 import szdCheck from "./tools/check";
+import szdExcel from "./tools/excel";
+import szdFile from "./tools/fileTool";
 
 import szdRouter from "./utils/goRouter";
 import szdComp from "./utils/component";
@@ -16,7 +19,7 @@ import szdStoreCookie from "./store/storeCookie";
 import { szdPop, szdPopSave, szdPopDel } from "./message/popup";
 import szdLoading from "./message/loading";
 
-import { $m, $mE, $mI, $mS, $mW, $t } from "./utils/globalConfig";
+import { $m, $mE, $mI, $mList, $mListNull, $mNull, $mR, $mS, $mW, $t } from "./utils/globalConfig";
 
 const installCommonFunction = app => {
   /** tool区域 */
@@ -26,8 +29,14 @@ const installCommonFunction = app => {
   app.config.globalProperties.szdCalc = szdCalc;
   //工具
   app.config.globalProperties.szdTool = szdTool;
+  //sap工具
+  app.config.globalProperties.szdSapTool = szdSapTool;
   //检查
   app.config.globalProperties.szdCheck = szdCheck;
+  //excel
+  app.config.globalProperties.szdExcel = szdExcel;
+  //文件
+  app.config.globalProperties.szdFile = szdFile;
   //路由和框架处理区域
   app.config.globalProperties.szdRouter = szdRouter;
   //组件方法
@@ -51,6 +60,10 @@ const installCommonFunction = app => {
   app.config.globalProperties.$mW = $mW;
   app.config.globalProperties.$mE = $mE;
   app.config.globalProperties.$mI = $mI;
+  app.config.globalProperties.$mR = $mR;
+  app.config.globalProperties.$mNull = $mNull;
+  app.config.globalProperties.$mListNull = $mListNull;
+  app.config.globalProperties.$mList = $mList;
 };
 
 export default installCommonFunction;

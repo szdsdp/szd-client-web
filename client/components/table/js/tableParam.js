@@ -3,9 +3,9 @@ import _ from "lodash";
 import { $t } from "../../../common/utils/globalConfig";
 import { setLayVar, setSelDataSortRule } from "./tableLayout";
 
-const const_type = ["string", "number", "boolean", "array", "date", "datetime", "time", "year", "month", "svg", "button"]; //数据类型
+const const_type = ["string", "number", "boolean", "array", "date", "datetime", "time", "year", "month", "svg", "upload", "button"]; //数据类型
 const const_type_align_center = ["boolean", "date", "datetime", "time", "year", "month"]; //数据类型-居中
-const const_ctrlType = ["input", "input-number", "date", "time", "checkbox", "radio", "select", "textarea", "svg", "button"]; //控件类型
+const const_ctrlType = ["input", "input-number", "date", "time", "checkbox", "radio", "select", "textarea", "password", "svg", "upload", "button"]; //控件类型
 //工具类默认按钮
 const const_btn_type = ["", "primary", "success", "warning", "danger", "info"];
 const const_toolbar_edit = ["$add", "$copy", "$del", "$uploadFold"];
@@ -47,7 +47,8 @@ const const_toolbar = [
     icon: "Download",
     noAuth: true,
     children: [
-      { fCode: "$export", label: "导出Excel", icon: "Download", noAuth: true }
+      { fCode: "$export", label: "导出Excel", icon: "Download", noAuth: true },
+      { fCode: "$exportLay", label: "导出Excel设置格式", icon: "Download", noAuth: true }
       // { fCode: "$todo", label: "推送代办", tip: "推送代办", icon: "Document",noAuth:true },
       // { fCode: "$email", label: "推送邮件", tip: "推送邮件", icon: "Message",noAuth:true }
     ]
@@ -107,8 +108,11 @@ function tableLayout(params, btnHide) {
     viewMode: ["0", "1", "2", "3"].includes(params.viewMode) ? params.viewMode : "0", //详情 0.不显示详情,1.单页面 2.多表头Tab页面 3.指定Tab页面（根据viewCat设置）
     viewTitle: params.viewTitle, //详情页标题字段 行上数据的字段
     light: params.light, //指示灯标识 列字段 列值为： 1.红 2.黄 3.绿 其它灰色
+    highlightCurrentRow: _.isBoolean(params.highlightCurrentRow) ? params.highlightCurrentRow : true,
     selection: ["0", "1", "2"].includes(params.selection) ? params.selection : "0", //显示选择列 0.不显示 1.显示 2.显示固定
+    showIndex: _.isBoolean(params.showIndex) ? params.showIndex : false, //索引行
     showSummary: _.isBoolean(params.showSummary) ? params.showSummary : true, //汇总
+    showSumCol: _.isNumber(params.showSumCol) ? params.showSumCol : 0, //汇总显示列
     sort: ["0", "1", "2"].includes(params.sort) ? params.sort : "1", //排序 0.不启用排序 1.前端排序 2后端排序
     merge: ["0", "1", "2"].includes(params.merge) ? params.merge : "2", //排序合并单元格 0.不合并 1.按列值相同合并 2.按排序梯次合并
     filter: _.isBoolean(params.filter) ? params.filter : true, //过滤 false.不启用过滤 true.前端过滤
@@ -117,6 +121,10 @@ function tableLayout(params, btnHide) {
     pagination: ["0", "1", "2"].includes(params.pagination) ? params.pagination : "2", //分页方式 0.不分页 1.前端分页 2.后端分页
     impTmpCode: params.impTmpCode, //导入模板代码
     impTmpName: params.impTmpName, //导入模板名称
+    exportExcelMode: ["0", "1", "2"].includes(params.exportExcelMode) ? params.exportExcelMode : "0", //导出Excel模式 0.不回调 1.绑定回调方法 2.绑定属性值方法
+    addRowMode: _.isBoolean(params.addRowMode) ? params.addRowMode : false, //新增行回调模式
+    appShowMode: ["0", "1"].includes(params.appShowMode) ? params.appShowMode : "1", //APP显示模式 0.table模式 1.card模式
+    tableUKey: params.tableUKey || "", //table唯一标识
 
     //内部参数
     $SZDUserId: store.state.loginUser.user.userId,
@@ -199,6 +207,7 @@ function tableBarAddBtn(bar, btns, item, layout) {
       color: item.color,
       disabled: bar.btnDisabled.includes(item.fCode),
       noAuth: _.isBoolean(item.noAuth) ? item.noAuth : false,
+      more: _.isBoolean(item.more) ? item.more : false,
       fstHide: false
     };
     //翻译
@@ -299,19 +308,25 @@ function tableFCatItem(item, layout, parent) {
     numDec: item.type === "number" && !isNaN(item.numDec) ? item.numDec : undefined, //小数位位数
     noZero: item.type === "number" && _.isBoolean(item.noZero) ? item.noZero : false, //不输出0
     importSplit: item.importSplit, //数据导入分割符
+    exportSplit: item.exportSplit, //数据导出分割符
     //列汇总 0.不汇总 1.合计 2.平均值 3.最小值 4.最大值 5.统计行数
     doSum: ["0", "1", "2", "3", "4", "5"].includes(item.doSum) ? item.doSum : "0",
     //控件类型
     ctrlType: const_ctrlType.includes(item.ctrlType) ? item.ctrlType : undefined, //控件类型
     ctrlParam: undefined, //控件参数（参数项参照各控件参数配置 disable readOnly 不能使用）
     //点击事件
-    click: item.click ? item.click : false,
+    click: _.isBoolean(item.click) ? item.click : false,
     //表头设置
     required: _.isBoolean(item.required) ? item.required : false, //必输
     helpTip: item.helpTip, //表头提示
     sort: false, //排序
     merge: false, //合并单元格
     filter: false, //过滤
+    whereOpt: item.whereOpt, //字符串查询规则操作符
+    noCopy: _.isBoolean(item.noCopy) ? item.noCopy : false, //禁止复制
+    appShow: ["1", "2"].includes(item.appShow) ? item.appShow : "", //App输出 1.不输出 2.仅详情输出
+    appScan: item.appScan === true, //App扫码
+
     //内部参数
     $SZDPos: 0, //内部参数-输出位置
     $SZDCol: true, //内部传输-true 数据列 false 多表头表头
@@ -352,12 +367,12 @@ function tableFCatItem(item, layout, parent) {
   }
 
   //点击事件
-  if (fCat.click && ["boolean", "array", "button"].includes(fCat.type)) {
+  if (fCat.click && ["boolean", "array", "upload", "button"].includes(fCat.type)) {
     fCat.click = false;
   }
 
   //排序、合并、过滤设置，按钮不允许此操作
-  if (["array", "button", "svg"].includes(fCat.type)) {
+  if (["array", "svg", "upload", "button"].includes(fCat.type)) {
     fCat.sort = false;
     fCat.merge = false;
     fCat.filter = false;
@@ -383,7 +398,7 @@ function tableFCatItem(item, layout, parent) {
   }
 
   //控件设置
-  if (fCat.ctrlType || fCat.edit || fCat.type === "button" || fCat.type === "svg") {
+  if (fCat.ctrlType || fCat.edit || ["svg", "upload", "button"].includes(fCat.type)) {
     setCtrl(fCat, item.ctrlParam);
   }
 
@@ -397,10 +412,10 @@ function tableFCatItem(item, layout, parent) {
 
 //控件及参数设置
 function setCtrl(fCat, ctrlParam) {
-  //控件类型 ["string", "number", "boolean", "array", "date", "datetime", "time", "year", "month", "svg", "button"]
+  //控件类型 ["string", "number", "boolean", "array", "date", "datetime", "time", "year", "month", "svg", "upload", "button"]
   switch (fCat.type) {
     case "string":
-      if (!["input", "radio", "select", "textarea"].includes(fCat.ctrlType)) fCat.ctrlType = "input";
+      if (!["input", "radio", "select", "textarea", "password"].includes(fCat.ctrlType)) fCat.ctrlType = "input";
       break;
     case "number":
       if (!["input", "input-number", "radio", "select"].includes(fCat.ctrlType)) fCat.ctrlType = "input";
@@ -417,6 +432,9 @@ function setCtrl(fCat, ctrlParam) {
     case "svg":
       fCat.ctrlType = "svg";
       break;
+    case "upload":
+      fCat.ctrlType = "upload";
+      break;
     case "button":
       fCat.ctrlType = "button";
       break;
@@ -424,7 +442,7 @@ function setCtrl(fCat, ctrlParam) {
       fCat.ctrlType = "date";
       break;
   }
-  //控件参数 ["input", "input-number", "date", "time", "checkbox", "radio", "select", "textarea", "svg", "button"];
+  //控件参数 ["input", "input-number", "date", "time", "checkbox", "radio", "select", "textarea", "password", "svg", "upload", "button"];
   switch (fCat.ctrlType) {
     case "input":
       setCtrlInput(fCat, ctrlParam);
@@ -447,8 +465,14 @@ function setCtrl(fCat, ctrlParam) {
     case "textarea":
       setCtrlTextarea(fCat, ctrlParam);
       break;
+    case "password":
+      setCtrlPassword(fCat, ctrlParam);
+      break;
     case "svg":
       setCtrlSvg(fCat, ctrlParam);
+      break;
+    case "upload":
+      setCtrlUpload(fCat, ctrlParam);
       break;
     case "button":
       setCtrlButton(fCat, ctrlParam);
@@ -482,6 +506,7 @@ function setCtrlInput(fCat, ctrlParam) {
     hide: _.isBoolean(ctrlParam.hide) ? ctrlParam.hide : false, //隐藏
     clearable: ctrlParam.clearable, //清空按钮
     dblclick: fCat.click, //双击事件
+    clickColor: fCat.click, //单击颜色
     align: fCat.align, //对齐方式
     noZero: fCat.noZero, //不输出0
     format: ctrlParam.format, //数据格式化
@@ -575,6 +600,7 @@ function setCtrlSelect(fCat, ctrlParam) {
     hide: _.isBoolean(ctrlParam.hide) ? ctrlParam.hide : false, //隐藏
     clearable: ctrlParam.clearable, //清空按钮
     placeholder: ctrlParam.placeholder, //占位符
+    showKey: _.isBoolean(ctrlParam.showKey) ? ctrlParam.showKey : true, //显示Key值
     first: _.isBoolean(ctrlParam.first) ? ctrlParam.first : false //值为空默认第一个
   };
 }
@@ -593,6 +619,18 @@ function setCtrlTextarea(fCat, ctrlParam) {
   };
 }
 
+//控件及参数设置 password
+function setCtrlPassword(fCat, ctrlParam) {
+  if (!ctrlParam) ctrlParam = {};
+  fCat.ctrlParam = {
+    placeholder: ctrlParam.placeholder, //占位符
+    maxlength: _.isNumber(ctrlParam.maxlength) ? ctrlParam.maxlength : "", //最大值
+    readonly: ctrlParam.readonly, //仅显示
+    disabled: !fCat.edit, //不可用
+    hide: _.isBoolean(ctrlParam.hide) ? ctrlParam.hide : false //隐藏
+  };
+}
+
 //控件及参数设置 svg
 function setCtrlSvg(fCat, ctrlParam) {
   if (!ctrlParam) ctrlParam = {};
@@ -602,9 +640,40 @@ function setCtrlSvg(fCat, ctrlParam) {
     fixed: _.isBoolean(ctrlParam.fixed) ? ctrlParam.fixed : false, //是否框架内置
     color: ctrlParam.color, //颜色
     colorField: ctrlParam.colorField, //动态颜色
-    fontSize: fCat.fontSize, //字体大小
+    fontSize: ctrlParam.fontSize, //字体大小
     labelField: ctrlParam.labelField, //显示标签
-    click: _.isBoolean(ctrlParam.click) ? ctrlParam.click : false //是否点击事件
+    clicked: fCat.click //是否点击事件
+  };
+}
+
+//控件及参数设置 upload
+function setCtrlUpload(fCat, ctrlParam) {
+  if (!ctrlParam) ctrlParam = {};
+  fCat.ctrlParam = {
+    fileCate: ctrlParam.fileCate, //文件类别、文件根目录
+    filePath: ctrlParam.filePath, //文件路径
+    listType: ctrlParam.listType ? ctrlParam.listType : "text", //文件列表的类型
+    listTypeTable: ctrlParam.listTypeTable ? ctrlParam.listTypeTable : "button", //文件列表的类型
+    limit: ctrlParam.limit, //最大上传文件数
+    fileSize: ctrlParam.fileSize, //文件大小-KB
+    accept: ctrlParam.accept, //上传文件类型 ".xls,.xlsx"
+    acceptTxt: ctrlParam.acceptTxt, //提示信息
+    extensions: ctrlParam.extensions, //文件后缀
+    checkRepeat: ctrlParam.checkRepeat, //检查文件重复
+    download: ctrlParam.download, //支持下载
+    dimension: ctrlParam.dimension, //尺寸[宽-最小，宽-最大，高-最小，高-最大]
+    compress: ctrlParam.compress, //压缩图片
+    capture: ctrlParam.capture, //上传模式
+    cardWidth: ctrlParam.cardWidth, //卡片大小-宽
+    cardHeight: ctrlParam.cardHeight, //卡片大小-高
+    previewType: ctrlParam.previewType, //预览方式
+    showDelete: ctrlParam.showDelete, //显示删除文件
+    bussId: ctrlParam.bussId, //业务Id
+    bussDocId: ctrlParam.bussDocId, //业务单号
+    watermark: ctrlParam.watermark, //水印
+    zip: ctrlParam.zip === true, //打包下载
+    disabled: !fCat.edit, //不可用
+    hide: _.isBoolean(ctrlParam.hide) ? ctrlParam.hide : false //隐藏
   };
 }
 
@@ -723,22 +792,32 @@ function viewCatAddFCatMove(mainLayout, item) {
   let fCat = {
     field: item.field, //字段
     label: item.label ? item.label : item.field, //列名称
+    width: _.isNumber(item.width) ? item.width : undefined, //宽度
+    minWidth: _.isNumber(item.minWidth) ? item.minWidth : undefined, //最小宽度
     align: undefined, //对齐方式:left center right
     hide: _.isBoolean(item.hide) ? item.hide : false, //隐藏
+    fixed: ["left", "right"].includes(item.fixed) ? item.fixed : false, //固定列
     //数据维护
     edit: _.isBoolean(item.edit) ? item.edit : false, //编辑
     type: const_type.includes(item.type) ? item.type : "string", //数据类型
     numDot: item.type === "number" ? (_.isBoolean(item.numDot) ? item.numDot : true) : false, //千分位符
     numDec: item.type === "number" && !isNaN(item.numDec) ? item.numDec : undefined, //小数位位数
-    noZero: _.isBoolean(item.noZero) ? item.noZero : false, //不输出0
+    noZero: item.type === "number" && _.isBoolean(item.noZero) ? item.noZero : false, //不输出0
+    importSplit: item.importSplit, //数据导入分割符
+    //列汇总 0.不汇总 1.合计 2.平均值 3.最小值 4.最大值 5.统计行数
+    doSum: ["0", "1", "2", "3", "4", "5"].includes(item.doSum) ? item.doSum : "0",
     //控件类型
     ctrlType: const_ctrlType.includes(item.ctrlType) ? item.ctrlType : undefined, //控件类型
     ctrlParam: undefined, //控件参数（参数项参照各控件参数配置 disable readOnly 不能使用）
     //点击事件
-    click: item.click ? item.click : false,
+    click: _.isBoolean(item.click) ? item.click : false,
     //表头设置
     required: _.isBoolean(item.required) ? item.required : false, //必输
     helpTip: item.helpTip, //表头提示
+    whereOpt: item.whereOpt, //字符串查询规则操作符
+    noCopy: _.isBoolean(item.noCopy) ? item.noCopy : false, //禁止复制
+    appShow: ["1", "2"].includes(item.appShow) ? item.appShow : "", //App输出 1.不输出 2.仅详情输出
+    appScan: item.appScan === true, //App扫码
     //内部参数
     $SZDPos: 0, //内部参数-输出位置
     $SZDDot: false //内部参数-是否设置小数位和千分位
@@ -758,8 +837,13 @@ function viewCatAddFCatMove(mainLayout, item) {
     fCat.$SZDDot = true;
   }
 
+  //非数值型汇总
+  if ((fCat.type !== "number" && ["1", "2"].includes(fCat.doSum)) || fCat.type === "button") {
+    fCat.doSum = "0";
+  }
+
   //控件设置
-  if (fCat.ctrlType || fCat.edit || fCat.type === "button") {
+  if (fCat.ctrlType || fCat.edit || ["svg", "upload", "button"].includes(fCat.type)) {
     setCtrl(fCat, item.ctrlParam);
   }
 

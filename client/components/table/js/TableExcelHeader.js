@@ -45,7 +45,8 @@ export function getExcelHeader(fCatCol, fieldFlag) {
     header: [], //表头行数组
     fields: [],
     merges: [], //合并单元格
-    outData: [] //输出表头
+    outData: [], //输出表头
+    fCatUse: {}
   };
   //输出数据数组
   getExcelHeaderColField(fCatCol, colHead, 0);
@@ -67,7 +68,7 @@ function getExcelHeaderColField(fCatCol, colHead, level) {
   let header = colHead.header[level];
   for (let i = 0; i < fCatCol.length; i++) {
     const item = fCatCol[i];
-    if (item.hide || ["button", "sub-table"].includes(item.type)) continue;
+    if (item.hide || ["button", "sub-table", "svg"].includes(item.type)) continue;
     colHead.count = colHead.count + 1;
     //设置列头
     let l_pos = colHead.count - 1;
@@ -77,6 +78,7 @@ function getExcelHeaderColField(fCatCol, colHead, level) {
       getExcelHeaderColField(item.children, colHead, level + 1);
     } else {
       colHead.fields.push(item.field);
+      colHead.fCatUse[item.field] = item;
     }
   }
 }
@@ -203,10 +205,10 @@ export function downloadFilename(lay) {
   let year = date.getFullYear().toString();
   let month = (date.getMonth() + 1).toString().padStart(2, "0");
   let day = date.getDate().toString().padStart(2, "0");
-  if (lay.value.layout.impTmpName) {
-    return lay.value.layout.impTmpName + "_" + year + month + day + ".xlsx";
-  } else if (lay.value.layout.report) {
-    return lay.value.layout.report.toLowerCase() + "_" + year + month + day + ".xlsx";
+  if (lay.layout.impTmpName) {
+    return lay.layout.impTmpName + "_" + year + month + day + ".xlsx";
+  } else if (lay.layout.report) {
+    return lay.layout.report.toUpperCase() + "_" + year + month + day + ".xlsx";
   } else {
     return year + month + day + ".xlsx";
   }

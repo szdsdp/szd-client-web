@@ -1,24 +1,22 @@
 <template>
-  <div v-if="!_ctrl.hide" class="main-textarea">
-    <div class="main-textarea-content">
-      <szd-password
-        v-model="_modelValue"
-        :placeholder="_ctrl.placeholder"
-        :maxlength="_ctrl.maxlength"
-        :readonly="_ctrl.readonly"
-        :disabled="_ctrl.disabled"
-        :szdfst="_ctrl.szdfst"
-        :szdopt="_ctrl.szdopt"
-        @input="handleInput"
-        @change="handleChange"
-        @focus="handleFocus"
-        @blur="handleBlur" />
-    </div>
-  </div>
+  <template v-if="!_ctrl.hide">
+    <szd-password
+      v-model="_modelValue"
+      :placeholder="_ctrl.placeholder"
+      :maxlength="_ctrl.maxlength"
+      :readonly="_ctrl.readonly"
+      :disabled="_ctrl.disabled"
+      :szdfst="_ctrl.szdfst"
+      :szdopt="_ctrl.szdopt"
+      @input="handleInput"
+      @change="handleChange"
+      @focus="handleFocus"
+      @blur="handleBlur" />
+  </template>
 </template>
 
 <script setup>
-  import { defineProps, defineEmits, computed } from "vue";
+  import { computed } from "vue";
 
   const props = defineProps({
     //输入框所需的参数

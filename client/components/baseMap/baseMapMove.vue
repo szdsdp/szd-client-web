@@ -145,7 +145,7 @@
 <script setup>
   import _ from "lodash";
   import { $m, $t } from "../../common/utils/globalConfig";
-  import { defineEmits, ref, defineProps, onMounted, computed } from "vue";
+  import { ref, onMounted, computed } from "vue";
   import { getTableColumnList } from "../api/baseMap";
   import baseMapSel from "./sub/baseMapSel.vue";
   import baseMapRetC1 from "./sub/baseMapRetC1.vue";

@@ -12,12 +12,13 @@
       :span-method="handleSpanMethod"
       @sort-change="handleSortChange"
       v-bind="$attrs"
+      :highlight-current-row="_lay.layout.highlightCurrentRow"
       :row-key="_lay.layout.rowKey"
       :key="tableKey"
       height="100%"
       class="flex-1">
       <!-- 拖动手柄 -->
-      <el-table-column v-if="_lay.layout.dragRow" label="" align="center" width="36" fixed="left">
+      <el-table-column v-if="_lay.layout.dragRow" label="" align="center" width="36" fixed="left" class-name="main-table-col-cell">
         <template #default="scope">
           <div class="main-drag-handle">
             <el-icon>
@@ -27,16 +28,13 @@
         </template>
       </el-table-column>
       <!-- 指示灯 -->
-      <el-table-column v-if="_lay.layout.light" label="" align="center" width="36" fixed="left">
+      <el-table-column v-if="_lay.layout.light" label="" align="center" width="36" fixed="left" class-name="main-table-col-cell">
         <template #default="scope">
-          <szd-svg name="circle" v-if="scope.row[_lay.layout.light] == '1'" style="font-size: 14px; color: #f54f4f" />
-          <szd-svg name="circle" v-else-if="scope.row[_lay.layout.light] == '2'" style="font-size: 14px; color: #ffd70b" />
-          <szd-svg name="circle" v-else-if="scope.row[_lay.layout.light] == '3'" style="font-size: 14px; color: #5cc22d" />
-          <szd-svg name="circle" v-else style="font-size: 14px; color: #909399" />
+          <szd-light :light="scope.row[_lay.layout.light]" />
         </template>
       </el-table-column>
       <!-- 详情 -->
-      <el-table-column v-if="_lay.layout.viewMode !== '0'" label="" align="center" width="36" fixed="left">
+      <el-table-column v-if="_lay.layout.viewMode !== '0'" label="" align="center" width="36" fixed="left" class-name="main-table-col-cell">
         <template #default="scope">
           <el-button type="primary" link icon="View" @click="handleRowView(scope.row, scope.$index)" />
         </template>
@@ -47,7 +45,10 @@
         type="selection"
         align="center"
         width="50"
-        :fixed="_lay.layout.selection === '2' ? 'left' : false" />
+        :fixed="_lay.layout.selection === '2' ? 'left' : false"
+        :selectable="handleColumnSelectable" />
+      <!-- 索引行 -->
+      <el-table-column v-if="_lay.layout.showIndex" :label="$t('行号')" type="index" align="center" width="45" fixed="left" />
       <!-- 输出列 -->
       <template v-for="fCat in _lay.fCatCol">
         <tableCompColumn :layout="_lay.layout" :layFCat="fCat" @handleRowEvent="handleRowEventImp" />
@@ -59,7 +60,8 @@
 </template>
 
 <script setup>
-  import { defineProps, defineEmits, ref, defineExpose, computed, getCurrentInstance, onMounted, nextTick, watch } from "vue";
+  import { ref, computed, getCurrentInstance, onMounted, nextTick, watch } from "vue";
+  import { $t } from "../../common/utils/globalConfig";
   import { dataAdd, dataCopy, dataDel, dataSum } from "./js/tableFunc";
   import { dataSortFilter } from "./js/tableFuncSortFilter";
   import Sortable from "sortablejs";
@@ -182,12 +184,12 @@
     } else {
       dataSortFilter(_dataObj, _lay, _tParObj);
     }
-    tableKey.value = tableKey.value + 1;
+    // tableKey.value = tableKey.value + 1;
   };
 
   //table事件-汇总合计行
   const handleSummaryMethod = obj => {
-    return dataSum(obj, _lay.value.fCatCol);
+    return dataSum(obj, _lay.value.fCatCol, _lay.value.layout.showSumCol);
   };
 
   //合并行
@@ -207,6 +209,11 @@
   //详情信息
   const handleRowView = (row, rowIndex) => {
     refTableView.value.callInitData(_lay.value, row, rowIndex, _dataObj.value.length);
+  };
+
+  //复选框
+  const handleColumnSelectable = (row, index) => {
+    return !(row.$SZDRowHide === true || row["$SZDRowSelection"] === true);
   };
 
   //行回调事件
@@ -246,15 +253,19 @@
         handleEventImp("$add", dataAdd(_dataObj, _lay.value.fCatUse));
         break;
       case "$copy":
-        handleEventImp("$copy", dataCopy(_dataObj, refTable));
+        handleEventImp("$copy", dataCopy(_dataObj, _lay.value.fCatUse, refTable.value.getSelectionRows()));
         break;
       case "$del":
-        handleEventImp("$del", dataDel(_dataObj, refTable));
+        handleEventImp("$del", dataDel(_dataObj, refTable.value.getSelectionRows()));
         break;
       case "$layout":
-        tableKey.value = tableKey.value + 1;
+        // tableKey.value = tableKey.value + 1;  设置key变化，selection复选框不变化，后期需要关注20260314
         break;
       case "$filter":
+        // tableKey.value = tableKey.value + 1;
+        break;
+      case "$refresh":
+        refTable.value.clearSelection();
         tableKey.value = tableKey.value + 1;
         break;
     }

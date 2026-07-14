@@ -89,7 +89,7 @@
 <script setup>
   import _ from "lodash";
   import { $m, $t } from "../../common/utils/globalConfig";
-  import { defineEmits, ref, defineProps, onMounted, computed } from "vue";
+  import { ref, onMounted, computed } from "vue";
   import { getBaseField } from "../api/baseMap";
   import baseMapSel from "./sub/baseMapSel.vue";
   import baseMapRet from "./sub/baseMapRet.vue";
@@ -190,9 +190,9 @@
         _baseMap.value.header.servKey = res.data.header.fieldCode;
         _baseMap.value.header.servKeyName = res.data.header.fieldName;
         //查询映射
-        if (res.data.pcFilter.length > 0) {
-          for (let i = 0; i < res.data.pcFilter.length; i++) {
-            const item = res.data.pcFilter[i];
+        if (res.data.filter.length > 0) {
+          for (let i = 0; i < res.data.filter.length; i++) {
+            const item = res.data.filter[i];
             //查找字段是否已使用
             const tmpSel = mapTemp.selList.find(r => r.servField === item.fieldId);
             //服务字段赋值
@@ -207,9 +207,9 @@
           }
         }
         //结果映射
-        if (res.data.pcOutput.length > 0) {
-          for (let i = 0; i < res.data.pcOutput.length; i++) {
-            const item = res.data.pcOutput[i];
+        if (res.data.output.length > 0) {
+          for (let i = 0; i < res.data.output.length; i++) {
+            const item = res.data.output[i];
             //查找字段是否已使用
             const tmpRet = mapTemp.retList.find(r => r.servField === item.fieldId);
             //服务字段赋值

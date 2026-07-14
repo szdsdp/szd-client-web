@@ -9,7 +9,7 @@
             :icon="item.icon"
             :disabled="item.disabled"
             @click="handleClick(item.fCode)"
-            :class="[item.fCode === '$filter' && btnFilterColor ? 'active' : '', 'relative', 'tooltip']"
+            :class="[item.fCode === '$filterFold' && btnFilterColor ? 'activeColor' : '']"
             @mouseenter="handleMouseenter($event, item)"
             @mouseleave="handleMouseleave($event, item)">
             {{ item.label }}
@@ -35,6 +35,8 @@
     <tableLayoutSortDg ref="refTableLayoutSortDg" v-model:lay="_lay" @layout-ok="handleLayoutOk('$layout')" />
     <!--  过滤设置  -->
     <tableLayoutFilterDg ref="refTableLayoutFilterDg" v-model:lay="_lay" @layout-ok="handleLayoutOk('$filter')" />
+    <!--  导出设置  -->
+    <tableLayoutColumnDg ref="refTableLayoutColumnDg" :lay="_lay" @export-lay="handleExportLay" />
     <!--  统计分析 -->
     <statistics ref="refStatistics" />
     <!--  上传Excel插件 -->
@@ -52,10 +54,12 @@
 
 <script setup>
   import "./css/tableToolbar.scss";
-  import { defineEmits, defineProps, ref, computed } from "vue";
+  import { ref, computed } from "vue";
+  import { $m } from "../../common/utils/globalConfig";
   import tableLayout from "./layout/tableLayout.vue";
   import tableLayoutSortDg from "./layout/tableLayoutSortDg.vue";
   import tableLayoutFilterDg from "./layout/tableLayoutFilterDg.vue";
+  import tableLayoutColumnDg from "./layout/tableLayoutColumnDg.vue";
   import statistics from "../tableStats/statistics.vue";
   import { excelExport, excelTmpExport, excelUpload } from "./js/TableExcel";
 
@@ -69,12 +73,18 @@
     dataObj: {
       type: Array,
       default: []
+    },
+    //回调方法
+    callMethod: {
+      type: Function,
+      default: undefined
     }
   });
   //子屏幕ref
   const refTableLayout = ref(); //布局屏幕
   const refTableLayoutSortDg = ref(); //排序屏幕
   const refTableLayoutFilterDg = ref(); //过滤屏幕
+  const refTableLayoutColumnDg = ref(); //导出列屏幕
   const refStatistics = ref(); //统计分析
   const uploadExcel = ref(); //上传Excel组件
   const uploadExcelBtn = ref(); //上传Excel组件中按钮
@@ -116,10 +126,13 @@
         }
         break;
       case "$template":
-        excelTmpExport(_lay);
+        excelTmpExport(_lay.value);
         break;
       case "$export":
-        excelExport(_lay, _dataObj);
+        excelExport(_lay.value, _dataObj.value);
+        break;
+      case "$exportLay":
+        refTableLayoutColumnDg.value.callInitData(); //表格布局-弹出界面
         break;
       case "$upload":
         uploadExcelBtn.value.$el.click();
@@ -145,10 +158,33 @@
   const setBtnFilterColor = () => {
     btnFilterColor.value = Object.keys(_lay.value.fRanges).length > 0;
   };
+  //导出数据
+  const handleExportLay = async obj => {
+    if (_lay.value.layout.exportExcelMode === "1") {
+      emit("clickToolbar", { fCode: "$exportLay", btnFlag: obj.btnFlag, expLay: obj.expLay });
+    } else if (_lay.value.layout.exportExcelMode === "2") {
+      if (obj.btnFlag === "B") {
+        excelExport(obj.expLay.lay, _dataObj.value);
+      } else {
+        if (props.callMethod) {
+          const _expResult = await props.callMethod({ fCode: "$exportLay", expLay: obj.expLay });
+          if (Array.isArray(_expResult) && _expResult.length > 0) {
+            excelExport(obj.expLay.lay, _expResult);
+          } else {
+            $m("CORE_CLIENT.W011"); //无需要导出的数据
+          }
+        } else {
+          $m("CORE_CLIENT.E118"); //高级表格未绑定callMethod属性值方法
+        }
+      }
+    } else {
+      excelExport(obj.expLay.lay, _dataObj.value);
+    }
+  };
   //上传数据
   const handleUploadExcel = file => {
     const rowIndex = _dataObj.value.length;
-    excelUpload(_lay, _dataObj, file).then(res => {
+    excelUpload(_lay.value, _dataObj.value, file).then(res => {
       if (res) {
         emit("clickToolbar", { fCode: "$upload", rowIndex: rowIndex });
       }
@@ -157,11 +193,16 @@
   };
   //统计分析
   const callStatistics = () => {
-    refStatistics.value.create({
-      layout: _lay.value.layout,
-      fieldCat: _lay.value.fCatCol,
-      data: _dataObj.value
-    });
+    let _stData = [];
+    for (let i = 0; i < _dataObj.value.length; i++) {
+      if (_dataObj.value[i]["$SZDRowHide"] === true) continue; //隐藏行不计算
+      _stData.push(_dataObj.value[i]);
+    }
+    if (_stData.length === 0) {
+      $m("CORE_CLIENT.W113"); //无需处理的数据
+    } else {
+      refStatistics.value.create({ layout: _lay.value.layout, fieldCat: _lay.value.fCatCol, data: _stData });
+    }
   };
 
   //鼠标事件-显示
@@ -230,6 +271,10 @@
     background-color: #3a8ee6;
     border-color: #3a8ee6;
     color: #fff;
+  }
+
+  .activeColor {
+    color: #0af439e0;
   }
 
   .tooltipText {

@@ -1,6 +1,6 @@
 <template>
   <div v-if="isShowContent">
-    <searchHelpView ref="searchHelpViewFrom" @exitSearchHelp="exitSearchHelp" @closeDialog="closeDialog" />
+    <searchHelpView ref="searchHelpViewFrom" :selectKeys="selectKeys" @exitSearchHelp="exitSearchHelp" @closeDialog="closeDialog" />
   </div>
 </template>
 
@@ -27,6 +27,11 @@
       baseSelect: {
         type: Object,
         default: () => []
+      },
+      //已选中数据的key
+      selectKeys: {
+        type: [Object, Boolean],
+        default: false
       }
     },
     data() {
@@ -35,7 +40,7 @@
         //窗口大小及样式
         objStyle: {
           multipleChoice: 1, //单选多选
-          pcTitle: "搜索帮助",
+          title: "搜索帮助",
           pcWidth: 1000, //窗口宽度
           pcHeight: 600, //窗口高度
           groupFlag: false //搜索帮助组
@@ -67,7 +72,7 @@
             }
             //窗口大小及样式
             this.objStyle.multipleChoice = this.multipleChoice; //单选多选
-            this.objStyle.pcTitle = res.data[0].header.pcTitle; //窗口标题
+            this.objStyle.title = res.data[0].header.title; //窗口标题
             this.objStyle.pcWidth = res.data[0].header.pcWidth ? res.data[0].header.pcWidth : 1000; //窗口宽度
             this.objStyle.pcHeight = res.data[0].header.pcWidth ? res.data[0].header.pcHeight : 600; //窗口高度
             if (l_length > 1) {
@@ -84,7 +89,7 @@
             for (let i = this.objStyle.groupFlag ? 1 : 0; i < l_length; i++) {
               //设置查询条件
               if (Array.isArray(this.baseSelect) && this.baseSelect.length > 0) {
-                this.setObjFilter(res.data[i].pcFilter, res.data[i].header.fieldCode);
+                this.setObjFilter(res.data[i].filter, res.data[i].header.fieldCode);
               }
               l_helpArr.push(res.data[i]);
             }
@@ -110,7 +115,7 @@
         }
       },
       //设置查询条件
-      setObjFilter(pcFilter, fieldCode) {
+      setObjFilter(filter, fieldCode) {
         for (let i = 0; i < this.baseSelect.length; i++) {
           let l_fieldId = this.baseSelect[i][0];
           //集映射
@@ -126,9 +131,9 @@
           }
           //查询条件赋值
           if (l_fieldId) {
-            for (let k = 0; k < pcFilter.length; k++) {
-              if (pcFilter[k].fieldId === l_fieldId) {
-                pcFilter[k].fieldVal = this.baseSelect[i][1];
+            for (let k = 0; k < filter.length; k++) {
+              if (filter[k].fieldId === l_fieldId) {
+                filter[k].fieldVal = this.baseSelect[i][1];
                 break;
               }
             }

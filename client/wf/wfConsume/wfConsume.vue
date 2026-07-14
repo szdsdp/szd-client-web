@@ -8,51 +8,42 @@
     align-center
     destroy-on-close
     draggable>
-    <div v-szd-dialog="['95%', '85%']" />
+    <div v-szd-dialog="['90%', '80%']" />
 
-    <el-tabs v-model="dg.actTab" class="szd__tb__wrapper">
-      <el-tab-pane :label="$t('本单发票')" name="invImg">
-        <wfConsumeInvImg ref="refWfConsumeInvImg" :objData="objData" :bussBase="bussBase" />
+    <el-tabs v-model="dg.actTab">
+      <el-tab-pane :label="$t('影像')" name="Tab1">
+        <wfConsumeInvImg :objData="objData" :bussParam="bussParam" />
       </el-tab-pane>
-      <el-tab-pane :label="$t('个人票夹')" name="invFol">
-        <wfConsumeInvFol ref="refWfConsumeInvFol" :objData="objData" :bussBase="bussBase" />
+      <el-tab-pane :label="$t('票夹')" name="Tab2">
+        <wfConsumeInvFol :objData="objData" :bussParam="bussParam" />
       </el-tab-pane>
     </el-tabs>
 
     <template #footer>
-      <el-button type="primary" @click="okayForm">{{ $t("确定") }}</el-button>
-      <el-button type="primary" @click="closeForm">{{ $t("关闭") }}</el-button>
+      <szd-button label="确定" type="primary" @click="okayForm" />
+      <szd-button label="关闭" type="primary" @click="closeForm" />
     </template>
   </el-dialog>
 </template>
 
 <script setup>
-  import { defineEmits, defineProps, onMounted, ref } from "vue";
+  import { onMounted, ref } from "vue";
   import { $t } from "../../common/utils/globalConfig";
+  import { wfEisConsumeFolToImg } from "../api/wfComsume";
   import wfConsumeInvImg from "./wfConsumeInvImg.vue";
   import wfConsumeInvFol from "./wfConsumeInvFol";
-  import { wfEisConsumeFolToImg } from "../api/wfComsume";
 
-  //更新数据对象
-  const emit = defineEmits(["okaySubmit"]);
-
-  //子屏幕
-  const refWfConsumeInvImg = ref();
-  const refWfConsumeInvFol = ref();
+  //更新
+  const emit = defineEmits(["okay"]);
 
   const props = defineProps({
-    //业务主体
-    bussBase: {
+    bussParam: {
       type: Object,
       default: {
         bussId: "", //业务Id
-        bstp: "" //业务类型
+        bstp: "", //业务类型
+        invList: [] //已存在发票号 {invCode，invNo}
       }
-    },
-    //本单已有的发票代码清单
-    invList: {
-      type: Array,
-      default: []
     }
   });
 
@@ -60,15 +51,15 @@
   const dg = ref({
     title: "消费记录",
     open: false,
-    actTab: "invImg"
+    actTab: "Tab1"
   });
 
-  //用户选择
+  //发票清单
   const objData = ref({
     invImg: [],
     invFol: [],
-    folderId: undefined,
-    folderName: undefined
+    invImgSel: [],
+    invFolSel: []
   });
 
   onMounted(() => {
@@ -77,28 +68,21 @@
 
   //初始化数据
   const initData = () => {
-    objData.value.invImg = props.invList;
-    objData.value.invFol = [];
-
     dg.value.open = true;
   };
 
-  //数据确定
+  //确定
   const okayForm = () => {
+    //合并返回的数据
+    let invSel = objData.value.invImgSel;
     //票夹移动到影像
-    let json = {
-      bussId: props.bussBase.bussId,
-      moveList: objData.value.invFolSel
-    };
-    if (json.moveList && json.moveList.length > 0) {
-      wfEisConsumeFolToImg(json).then(res => {
-        emit("okay", objData.value);
-        dg.value.open = false;
-      });
-    } else {
-      emit("okay", objData.value);
-      dg.value.open = false;
+    if (objData.value.invFolSel && objData.value.invFolSel.length > 0) {
+      invSel.push(...objData.value.invFolSel);
+      let json = { bussId: props.bussParam.bussId, moveList: objData.value.invFolSel };
+      wfEisConsumeFolToImg(json).then(() => {});
     }
+    emit("okay", invSel);
+    dg.value.open = false;
   };
 
   const handleCloseForm = () => {

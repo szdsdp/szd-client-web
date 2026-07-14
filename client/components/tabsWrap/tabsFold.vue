@@ -15,7 +15,7 @@
   </div>
 </template>
 <script setup>
-  import { defineEmits, defineProps, ref, watch } from "vue";
+  import { ref, watch } from "vue";
   import { $t } from "../../common/utils/globalConfig";
 
   const emit = defineEmits(["update:fold", "change"]);
@@ -69,10 +69,11 @@
       cursor: pointer;
       background: #f7f9fa;
       font-size: $fz;
+      font-weight: 600;
 
       > .el-icon {
         margin-right: 5px;
-        line-height: 1.1em;
+        line-height: 1.2em;
       }
 
       &:hover {

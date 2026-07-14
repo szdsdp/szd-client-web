@@ -34,15 +34,6 @@
           numDot
           :descSpan="12" />
         <szd-input-form-item-col
-          v-model="bussBaseObj.amtApplyTax"
-          label="申请税额"
-          disabled
-          :span="12"
-          type="number"
-          :numDec="2"
-          numDot
-          :descSpan="12" />
-        <szd-input-form-item-col
           v-model="bussBaseObj.amtActual"
           label="实际金额"
           disabled
@@ -51,23 +42,6 @@
           :numDec="2"
           numDot
           :descSpan="12" />
-        <szd-input-form-item-col
-          v-model="bussBaseObj.amtActualTax"
-          label="实际税额"
-          disabled
-          :span="12"
-          type="number"
-          :numDec="2"
-          numDot
-          :descSpan="12" />
-      </el-row>
-      <el-row>
-        <szd-input-form-item-col v-model="bussBaseObj.sapPayDoc" label="付款单号" disabled :span="12" :descSpan="12" />
-        <szd-input-form-item-col v-model="bussBaseObj.sapOtherDoc" label="辅助单号" disabled :span="12" :descSpan="12" />
-        <szd-input-form-item-col v-model="bussBaseObj.sapAccDoc" label="会计凭证" disabled :span="12" :descSpan="12" />
-        <szd-input-form-item-col v-model="bussBaseObj.sapAccYear" label="财年" disabled :span="12" :descSpan="12" />
-        <szd-input-form-item-col v-model="bussBaseObj.sapAccDocOff" label="冲销凭证" disabled :span="12" :descSpan="12" />
-        <szd-input-form-item-col v-model="bussBaseObj.sapAccYearOff" label="冲销财年" disabled :span="12" :descSpan="12" />
       </el-row>
       <el-row>
         <szd-input-form-item-col v-model="bussBaseObj.createBy" label="制单人" disabled :span="12" :desc="bussBaseObj.createByName" :descSpan="12" />
@@ -93,7 +67,7 @@
 </template>
 
 <script setup>
-  import { defineExpose, ref } from "vue";
+  import { ref } from "vue";
   import szdRouter from "../../common/utils/goRouter";
   //功能参数
   const dg = ref({
@@ -103,7 +77,7 @@
   const bussBaseObj = ref({});
 
   //接受并处理
-  const acceptData = bussBase => {
+  const callWfDgBussBase = bussBase => {
     dg.value.open = true;
     bussBaseObj.value = bussBase;
   };
@@ -120,6 +94,6 @@
 
   //定义父组件可用方法
   defineExpose({
-    acceptData
+    callWfDgBussBase
   });
 </script>

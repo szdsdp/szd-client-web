@@ -26,20 +26,23 @@
               :row-key="fCat.layout.rowKey"
               border
               stripe
-              @handleRowEvent="handleSubRowEventImp($event, fCat.field)"
-              @handleEvent="handleSubEventImp($event, fCat.field)" />
+              @handleRowEvent="handleSubRowEventImp($event, fCat.field, fCat.layout)"
+              @handleEvent="handleSubEventImp($event, fCat.field, fCat.layout)" />
           </el-col>
         </template>
 
         <!-- 详情字段 -->
         <template v-else>
-          <el-col :span="12">
-            <el-form-item :label="fCat.label" :label-width="fCat.labelWidth" :required="fCat.required">
-              <template v-if="fCat.helpTip" #label>
-                <div>
+          <el-col :span="fCat.ctrlType === 'upload' ? 24 : 12">
+            <el-form-item :label="fCat.label" :label-width="fCat.ctrlType === 'upload' ? '12.5%' : ''" :required="fCat.required" style="height: auto">
+              <template v-if="fCat.helpTip || fCat.ctrlType === 'upload'" #label>
+                <div class="main-form-label">
                   <span>{{ fCat.label }}</span>
                   <el-icon class="main-help-tip">
                     <QuestionFilled @click.prevent.stop="handleHelpTip(fCat.helpTip)" />
+                  </el-icon>
+                  <el-icon v-if="fCat.ctrlType === 'upload' && _scope.row[fCat.field] && fCat.ctrlParam.zip" class="main-help-tip">
+                    <Download @click.prevent.stop="handleRowUploadDownload(fCat, _scope.row, _scope.$index)" />
                   </el-icon>
                 </div>
               </template>
@@ -102,6 +105,13 @@
                   :ctrl="handleCtrlParam(fCat, _scope.row)"
                   @change="handleRowChange(fCat, _scope.row, _scope.$index)" />
               </template>
+              <!--  控件类型 password -->
+              <template v-else-if="fCat.ctrlType === 'password'">
+                <szd-password-ctrl
+                  v-model="_scope.row[fCat.field]"
+                  :ctrl="handleCtrlParam(fCat, _scope.row)"
+                  @change="handleRowChange(fCat, _scope.row, _scope.$index)" />
+              </template>
               <!--  控件类型 svg -->
               <template v-else-if="fCat.ctrlType === 'svg'">
                 <szd-svg
@@ -110,8 +120,15 @@
                   :color="fCat.ctrlParam.colorField ? _scope.row[fCat.ctrlParam.colorField] : fCat.ctrlParam.color"
                   :fontSize="fCat.ctrlParam.fontSize"
                   :label="fCat.ctrlParam.labelField ? _scope.row[fCat.labelField] : ''"
-                  :clicked="fCat.ctrlParam.click"
+                  :clicked="fCat.ctrlParam.clicked"
                   @click="handleRowChange(fCat, _scope.row, _scope.$index)" />
+              </template>
+              <!--  控件类型 upload -->
+              <template v-else-if="fCat.ctrlType === 'upload'">
+                <szd-upload-view-ctrl
+                  v-model="_scope.row[fCat.field]"
+                  v-model:fileCount="_scope.row['$SZDUpload_' + fCat.field]"
+                  :ctrl="handleCtrlParam(fCat, _scope.row)" />
               </template>
               <!--  控件类型 button -->
               <template v-else-if="fCat.ctrlType === 'button'">
@@ -146,9 +163,10 @@
 
 <script setup>
   import "../css/tableView.scss";
-  import { defineProps, defineEmits, computed } from "vue";
+  import { computed } from "vue";
   import { setRowHelp } from "../js/tableFunc";
   import szdTool from "../../../common/tools/tool";
+  import szdFile from "../../../common/tools/fileTool";
   import { getCtrlSubTableOper, getCtrlParam, getCtrlParamButton } from "../js/tableParamCtrl";
 
   //回调事件
@@ -235,6 +253,13 @@
     szdTool.helpDoc(helpTip);
   };
 
+  //打包下载附件
+  const handleRowUploadDownload = (fCat, row, rowIndex) => {
+    if (row[fCat.field]) {
+      szdFile.downloadFileZip(row[fCat.field], fCat.ctrlParam.showDelete);
+    }
+  };
+
   //调用父级功能-行处理事件
   const callEmitRowEvent = (fCode, field, row, index) => {
     emit("handleRowEvent", { fCode: fCode, field: field, row: row, index: index });
@@ -246,9 +271,10 @@
   };
 
   //行事件-数据更改
-  const handleSubRowEventImp = (obj, field) => {
+  const handleSubRowEventImp = (obj, field, vLayout) => {
     emit("handleRowEvent", {
       fCode: "$sub-table",
+      tableUKey: vLayout.tableUKey,
       field: field,
       row: _scope.value.row,
       index: _scope.value.$index,
@@ -257,9 +283,10 @@
   };
 
   //按钮事件
-  const handleSubEventImp = (obj, field) => {
+  const handleSubEventImp = (obj, field, vLayout) => {
     emit("handleRowEvent", {
       fCode: "$sub-table",
+      tableUKey: vLayout.tableUKey,
       field: field,
       row: _scope.value.row,
       index: _scope.value.$index,

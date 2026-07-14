@@ -1,19 +1,17 @@
 <template>
   <!-- 小数位和千分位符号 -->
-  <div class="div-dot">{{ _modelValue }}</div>
+  <div class="div-dot" :class="clickColor ? 'div-click' : ''">{{ _modelValue }}</div>
 </template>
 
 <script setup>
-  import { computed, defineProps } from "vue";
+  import { computed } from "vue";
   import { addThousandSeparator } from "pixiu-number-toolkit";
 
   const props = defineProps({
     modelValue: {
-      type: [Number, String]
+      default: 0
     },
-    text: {
-      type: [Number, String]
-    },
+    text: {},
     numDot: {
       type: Boolean,
       default: false
@@ -24,11 +22,15 @@
     noZero: {
       type: Boolean,
       default: false
+    },
+    clickColor: {
+      type: Boolean,
+      default: false
     }
   });
   //值数据
   const _modelValue = computed(() => {
-    let val = props.text ? props.text : props.modelValue;
+    let val = props.text !== undefined ? props.text : props.modelValue;
     if (!val) {
       val = 0;
     } else if (isNaN(val)) {
@@ -54,5 +56,9 @@
     display: flex;
     justify-content: flex-end;
     width: 100%;
+  }
+
+  .div-click {
+    color: #1890ff;
   }
 </style>

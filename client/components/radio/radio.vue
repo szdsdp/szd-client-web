@@ -1,7 +1,7 @@
 <template>
   <div v-if="!_fst.hide" style="width: 100%; height: 100%">
     <el-radio-group v-model="_modelValue" class="radio-group-box" @change="handleChange" :disabled="_fst.disabled">
-      <el-radio v-for="(item, index) in _options" :key="index" :label="item.svalue">
+      <el-radio v-for="(item, index) in _options" :key="index" :value="item.svalue">
         {{ item.sname }}
       </el-radio>
     </el-radio-group>
@@ -9,8 +9,8 @@
 </template>
 
 <script setup>
-  import { defineProps, defineEmits, computed, ref, onMounted, watch } from "vue";
-  import { useStore } from "vuex";
+  import { computed, ref, onMounted, watch } from "vue";
+  import store from "~store";
   import { selectBaseView } from "../api/selectOption";
   import szdStoreLocal from "../../common/store/storeLocal";
   import szdComp from "../../common/utils/component";
@@ -91,8 +91,6 @@
       _options.value = localDict[baseField];
       getSvalName();
     } else {
-      //获取Vuex数据
-      const store = useStore();
       const vuexBase = store.state.vuexData.dict;
       if (vuexBase && vuexBase[baseField]) {
         _options.value = vuexBase[baseField];

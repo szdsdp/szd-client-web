@@ -1,37 +1,39 @@
-<template lang="html">
+<template>
   <div>
-    <div>
-      <el-radio v-model="type" label="1" size="small" border>{{ $t("每月") }}</el-radio>
+    <div class="l-row-rd">
+      <el-radio v-model="type" label="1">{{ $t("每月") }}</el-radio>
     </div>
-    <div>
-      <el-radio v-model="type" label="5" size="small" border>{{ $t("不指定") }}</el-radio>
+    <div class="l-row-rd">
+      <el-radio v-model="type" label="5">{{ $t("不指定") }}</el-radio>
     </div>
-    <div>
-      <el-radio v-model="type" label="2" size="small" border>{{ $t("周期") }}</el-radio>
+    <div class="l-row-rd">
+      <el-radio v-model="type" label="2">{{ $t("周期") }}</el-radio>
       <span style="margin-left: 10px; margin-right: 5px">{{ $t("从") }}</span>
-      <el-input-number @change="type = '2'" v-model="cycle.start" :min="1" :max="12" size="small" style="width: 100px"></el-input-number>
+      <el-input-number @change="type = '2'" v-model="cycle.start" :min="1" :max="12" style="width: 100px"></el-input-number>
       <span style="margin-left: 5px; margin-right: 5px">{{ $t("至") }}</span>
-      <el-input-number @change="type = '2'" v-model="cycle.end" :min="2" :max="12" size="small" style="width: 100px"></el-input-number>
-      月
+      <el-input-number @change="type = '2'" v-model="cycle.end" :min="2" :max="12" style="width: 100px"></el-input-number>
+      {{ $t("月") }}
     </div>
-    <div>
-      <el-radio v-model="type" label="3" size="small" border>{{ $t("循环") }}</el-radio>
+    <div class="l-row-rd">
+      <el-radio v-model="type" label="3">{{ $t("循环") }}</el-radio>
       <span style="margin-left: 10px; margin-right: 5px">{{ $t("从") }}</span>
-      <el-input-number @change="type = '3'" v-model="loop.start" :min="1" :max="12" size="small" style="width: 100px"></el-input-number>
+      <el-input-number @change="type = '3'" v-model="loop.start" :min="1" :max="12" style="width: 100px"></el-input-number>
       <span style="margin-left: 5px; margin-right: 5px">{{ $t("月开始，每") }}</span>
-      <el-input-number @change="type = '3'" v-model="loop.end" :min="1" :max="12" size="small" style="width: 100px"></el-input-number>
-      月执行一次
+      <el-input-number @change="type = '3'" v-model="loop.end" :min="1" :max="12" style="width: 100px"></el-input-number>
+      {{ $t("月执行一次") }}
     </div>
     <div>
-      <el-radio v-model="type" label="4" size="small" border>{{ $t("指定") }}</el-radio>
+      <el-radio v-model="type" label="4">{{ $t("指定") }}</el-radio>
       <el-checkbox-group v-model="appoint" style="margin-left: 0px; line-height: 25px">
-        <el-checkbox @change="type = '4'" v-for="i in 12" :key="i" :label="i.toString()"></el-checkbox>
+        <el-checkbox @change="type = '4'" v-for="i in 12" :key="i" :value="i.toString()" :label="i.toString()"></el-checkbox>
       </el-checkbox-group>
     </div>
   </div>
 </template>
 
 <script>
+  import { $t } from "../../../common/utils/globalConfig";
+
   export default {
     props: {
       modelValue: {
@@ -42,18 +44,18 @@
     data() {
       return {
         type: "1", // 类型
+        // 周期
         cycle: {
-          // 周期
           start: 0,
           end: 0
         },
+        // 循环
         loop: {
-          // 循环
           start: 0,
           end: 0
         },
+        // 指定周
         week: {
-          // 指定周
           start: 0,
           end: 0
         },
@@ -102,6 +104,7 @@
       }
     },
     methods: {
+      $t,
       updateVal(nv) {
         if (!nv) {
           return;
@@ -153,8 +156,15 @@
   };
 </script>
 
-<style lang="css" scoped>
+<style lang="scss" scoped>
   .el-checkbox + .el-checkbox {
     margin-left: 10px;
+  }
+
+  .l-row-rd {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 3px 0;
   }
 </style>

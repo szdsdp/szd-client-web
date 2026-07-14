@@ -16,7 +16,9 @@
             :disabled="fCat.disabled"
             :readonly="fCat.readonly"
             :clearable="fCat.clearable"
+            :clearSpace="fCat.clearSpace"
             :selectOpt="fCat.selectOpt"
+            :whereOpt="fCat.whereOpt"
             :label="fCat.label"
             :prop="fCat.prop"
             :labelWidth="fCat.labelWidth"
@@ -41,7 +43,7 @@
 </template>
 
 <script setup>
-  import { computed, ref, defineProps, defineEmits, watch, onMounted } from "vue";
+  import { computed, ref, watch, onBeforeMount } from "vue";
   import { $m } from "../../common/utils/globalConfig";
   import { initSchLay } from "./js/schParam";
   import schLayout from "./layout/schLayout.vue";
@@ -58,6 +60,11 @@
     schLay: {
       type: Object,
       default: {}
+    },
+    //自动获取url参数
+    autoQuery: {
+      type: Boolean,
+      default: true
     }
   });
   const emit = defineEmits(["handleEvent", "update:modelValue"]);
@@ -85,8 +92,8 @@
   const route = useRoute();
 
   //解析url参数
-  onMounted(() => {
-    initData();
+  onBeforeMount(() => {
+    if (props.autoQuery) initData();
   });
 
   const initData = () => {
@@ -96,12 +103,14 @@
         const item = _lay.value.schCat[i];
         if (!queryKey.includes(item.field)) continue;
         if (!_modelValue.value[item.field]) _modelValue.value[item.field] = [];
-        _modelValue.value[item.field].push({
-          type: item.type,
-          option: "EQ",
-          low: route.query[item.field],
-          high: undefined
-        });
+        if (!_modelValue.value[item.field].find(r => r.option === "EQ" && r.low === route.query[item.field])) {
+          _modelValue.value[item.field].push({
+            type: item.type,
+            option: "EQ",
+            low: route.query[item.field],
+            high: undefined
+          });
+        }
       }
     }
   };
@@ -121,6 +130,8 @@
         queryForm.value.resetFields();
         if (_lay.value.layout.reset) {
           handleEventImp("$search");
+        } else {
+          handleEventImp("$reset");
         }
         break;
       case "$search":

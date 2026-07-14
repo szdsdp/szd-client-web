@@ -60,28 +60,3 @@
     }
   };
 </script>
-
-<style scoped lang="scss">
-  :deep(.el-dialog) {
-    width: auto;
-    height: auto;
-
-    .el-dialog__header {
-      padding: 0;
-      margin-right: 0;
-    }
-
-    .el-dialog__body {
-      padding: 0.8rem 1.4rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      > div {
-        color: #000;
-        font-size: 0.24rem;
-        font-weight: 500;
-      }
-    }
-  }
-</style>

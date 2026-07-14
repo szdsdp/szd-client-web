@@ -11,10 +11,10 @@
         :num-dot="numDot"
         :num-dec="numDec"
         :show-help="_showHelp"
-        @help="dealSingleHelp('low')"
+        :help="dealSingleHelp(ranges[0], 'low')"
         :readonly="readonly"
         :disabled="onlyNull.includes(ranges[0].option) || disabled"
-        :clearable="!_showHelp && clearable"
+        :clearable="clearable"
         :enter="enter"
         @keydownEnter="enter ? emit('keydownEnter') : ''"
         @change="changeSingle" />
@@ -26,10 +26,10 @@
         :num-dot="numDot"
         :num-dec="numDec"
         :show-help="_showHelp"
-        @help="dealSingleHelp('high')"
+        :help="dealSingleHelp(ranges[0], 'high')"
         :readonly="readonly"
         :disabled="onlyNull.includes(ranges[0].option) || disabled"
-        :clearable="!_showHelp && clearable"
+        :clearable="clearable"
         :enter="enter"
         @keydownEnter="enter ? emit('keydownEnter') : ''"
         @change="changeSingle" />
@@ -39,7 +39,7 @@
       <szd-radio
         v-model="_boolean"
         :baseArr="[
-          { svalue: 'A', sname: $t('全选') },
+          { svalue: 'A', sname: $t('全部') },
           { svalue: '1', sname: $t('是') },
           { svalue: '0', sname: $t('否') }
         ]"
@@ -85,126 +85,131 @@
     <div v-if="type !== 'boolean' && !_selectOpt" class="u-btnWrap">
       <el-button v-if="!noExt" class="u-open" :class="['u-ruleBtn', modelValue.length > 0 ? 'active' : '']" @click="showDialog" icon="Switch" />
     </div>
-  </div>
-  <!--高级查询条件弹框-->
-  <el-dialog
-    draggable
-    align-center
-    v-model="visible"
-    append-to-body
-    :title="$t('高级查询')"
-    :before-close="cancel"
-    destroy-on-close
-    class="app-dialog-container">
-    <div v-szd-dialog="[800, 500]" />
-    <div class="main-table-title">
-      <div class="main-table-title-left" style="width: 100%">
-        <span>{{ $t("注意：高级查询条件行之间是或的关系，维护查询条件时请注意是否存在影响。") }}</span>
+
+    <!--高级查询条件弹框-->
+    <el-dialog
+      draggable
+      align-center
+      v-model="visible"
+      append-to-body
+      :title="$t('高级查询')"
+      :before-close="cancel"
+      destroy-on-close
+      class="app-dialog-container">
+      <div v-szd-dialog="[800, 500]" />
+      <div class="main-table-title">
+        <div class="main-table-title-left" style="width: 100%; padding: 0">
+          <div class="l-remark-scrollbar">
+            {{ $t("注：OR为或：查询条件任一关系满足即可，AND为与：查询条件所有关系必须都满足，请注意条件间相互关联。") }}
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="szd__tb__wrapper">
-      <el-table :data="ranges" border>
-        <el-table-column prop="option" :label="$t('操作符')" width="150">
-          <template v-slot="scope">
-            <el-select v-model="scope.row.option" @change="changeOperator($event, scope.row)" :disabled="readonly || disabled" clearable>
-              <el-option
-                v-for="item in filterOperators"
-                :disabled="scope.row.high === '' && onlyHigh.includes(item.value)"
-                :key="item.value"
-                :value="item.value"
-                :label="item.label" />
-            </el-select>
-          </template>
-        </el-table-column>
-        <el-table-column prop="low" :label="$t(!noTo ? '低值' : '值')">
-          <template v-slot="scope">
-            <szd-input
-              v-if="type === 'string' || type === 'number'"
-              v-model="scope.row.low"
-              :type="type"
-              :num-dot="numDot"
-              :num-dec="numDec"
-              :show-help="_showHelp"
-              @help="dealMultiHelp('low', scope.$index)"
-              :readonly="readonly"
-              :disabled="onlyNull.includes(scope.row.option) || disabled"
-              :clearable="!_showHelp && clearable"
-              @change="changeLow($event, scope.row)"
-              @click="focusRow(scope.$index)" />
-            <szd-time
-              v-else-if="type === 'time'"
-              v-model="scope.row.low"
-              :readonly="readonly"
-              :disabled="onlyNull.includes(scope.row.option) || disabled"
-              @change="changeLow($event, scope.row)"
-              @focus="focusRow(scope.$index)"
-              :clearable="clearable" />
-            <szd-date
-              v-else
-              v-model="scope.row.low"
-              :type="type"
-              :readonly="readonly"
-              :disabled="onlyNull.includes(scope.row.option) || disabled"
-              @change="changeLow($event, scope.row)"
-              @focus="focusRow(scope.$index)"
-              :clearable="clearable" />
-          </template>
-        </el-table-column>
-        <el-table-column v-if="!noTo" prop="high" :label="$t('高值')">
-          <template v-slot="scope">
-            <szd-input
-              v-if="type === 'string' || type === 'number'"
-              v-model="scope.row.high"
-              :type="type"
-              :num-dot="numDot"
-              :num-dec="numDec"
-              :show-help="_showHelp"
-              @help="dealMultiHelp('high', scope.$index)"
-              :readonly="readonly"
-              :disabled="onlyNull.includes(scope.row.option) || disabled"
-              :clearable="!_showHelp && clearable"
-              @change="changeHigh($event, scope.row)"
-              @click="focusRow(scope.$index)" />
-            <szd-time
-              v-else-if="type === 'time'"
-              v-model="scope.row.high"
-              :readonly="readonly"
-              :disabled="onlyNull.includes(scope.row.option) || disabled"
-              @change="changeHigh($event, scope.row)"
-              @focus="focusRow(scope.$index)"
-              :clearable="clearable" />
-            <szd-date
-              v-else
-              v-model="scope.row.high"
-              :type="type"
-              :readonly="readonly"
-              :disabled="onlyNull.includes(scope.row.option) || disabled"
-              @change="changeHigh($event, scope.row)"
-              @focus="focusRow(scope.$index)"
-              :clearable="clearable" />
-          </template>
-        </el-table-column>
-        <el-table-column :label="$t('操作')" align="center" width="100">
-          <template v-slot="scope">
-            <szd-button label="删除" type="primary" link @click="remove(scope.$index)" :disabled="readonly" icon="Delete" />
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-    <template #footer>
-      <szd-button label="新增" type="primary" @click="addRanges" :disabled="readonly" />
-      <szd-button label="粘贴" type="primary" @click="paste" :disabled="readonly" />
-      <szd-button label="清空" type="primary" @click="clearRanges" :disabled="readonly" />
-      <szd-button label="确认" type="primary" @click="confirm" :disabled="readonly" />
-      <szd-button label="取消" type="primary" @click="cancel" />
-    </template>
-  </el-dialog>
+      <div class="szd__tb__wrapper">
+        <el-table :data="ranges" border>
+          <el-table-column prop="option" :label="$t('操作符')" width="150">
+            <template v-slot="scope">
+              <el-select v-model="scope.row.option" @change="changeOperator($event, scope.row)" :disabled="readonly || disabled" clearable>
+                <el-option
+                  v-for="item in filterOperators"
+                  :disabled="!scope.row.high && type !== 'number' && onlyHigh.includes(item.value)"
+                  :key="item.value"
+                  :value="item.value"
+                  :label="item.label" />
+              </el-select>
+            </template>
+          </el-table-column>
+          <el-table-column prop="low" :label="$t(!noTo ? '低值' : '值')">
+            <template v-slot="scope">
+              <szd-input
+                v-if="type === 'string' || type === 'number'"
+                v-model="scope.row.low"
+                :type="type"
+                :num-dot="numDot"
+                :num-dec="numDec"
+                :show-help="_showHelp ? 'A' : false"
+                :help="dealSingleHelp(scope.row, 'low')"
+                @help="dealMultiHelp('low', scope.$index)"
+                :readonly="readonly"
+                :disabled="onlyNull.includes(scope.row.option) || disabled"
+                :clearable="clearable"
+                @change="changeLow($event, scope.row)"
+                @click="focusRow(scope.$index)" />
+              <szd-time
+                v-else-if="type === 'time'"
+                v-model="scope.row.low"
+                :readonly="readonly"
+                :disabled="onlyNull.includes(scope.row.option) || disabled"
+                @change="changeLow($event, scope.row)"
+                @focus="focusRow(scope.$index)"
+                :clearable="clearable" />
+              <szd-date
+                v-else
+                v-model="scope.row.low"
+                :type="type"
+                :readonly="readonly"
+                :disabled="onlyNull.includes(scope.row.option) || disabled"
+                @change="changeLow($event, scope.row)"
+                @focus="focusRow(scope.$index)"
+                :clearable="clearable" />
+            </template>
+          </el-table-column>
+          <el-table-column v-if="!noTo" prop="high" :label="$t('高值')">
+            <template v-slot="scope">
+              <szd-input
+                v-if="type === 'string' || type === 'number'"
+                v-model="scope.row.high"
+                :type="type"
+                :num-dot="numDot"
+                :num-dec="numDec"
+                :show-help="_showHelp ? 'A' : false"
+                :help="dealSingleHelp(scope.row, 'high')"
+                @help="dealMultiHelp('high', scope.$index)"
+                :readonly="readonly"
+                :disabled="onlyNull.includes(scope.row.option) || disabled"
+                :clearable="clearable"
+                @change="changeHigh($event, scope.row)"
+                @click="focusRow(scope.$index)" />
+              <szd-time
+                v-else-if="type === 'time'"
+                v-model="scope.row.high"
+                :readonly="readonly"
+                :disabled="onlyNull.includes(scope.row.option) || disabled"
+                @change="changeHigh($event, scope.row)"
+                @focus="focusRow(scope.$index)"
+                :clearable="clearable" />
+              <szd-date
+                v-else
+                v-model="scope.row.high"
+                :type="type"
+                :readonly="readonly"
+                :disabled="onlyNull.includes(scope.row.option) || disabled"
+                @change="changeHigh($event, scope.row)"
+                @focus="focusRow(scope.$index)"
+                :clearable="clearable" />
+            </template>
+          </el-table-column>
+          <el-table-column :label="$t('操作')" align="center" width="100">
+            <template v-slot="scope">
+              <szd-button label="删除" type="primary" link @click="remove(scope.$index)" :disabled="readonly" icon="Delete" />
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <template #footer>
+        <szd-button label="新增" type="primary" @click="addRanges" :disabled="readonly || disabled" />
+        <szd-button label="粘贴" type="primary" @click="paste" :disabled="readonly || disabled" />
+        <szd-button label="清空" type="primary" @click="clearRanges" :disabled="readonly || disabled" />
+        <szd-button label="确认" type="primary" @click="confirm" :disabled="readonly || disabled" />
+        <szd-button label="取消" type="primary" @click="cancel" />
+      </template>
+    </el-dialog>
+  </div>
 </template>
 <script setup>
-  import { ref, watch, computed, defineProps, defineEmits } from "vue";
-  import { $m, $t } from "../../common/utils/globalConfig";
-  import { szdSh, szdShShow } from "../searchHelp/serchHelp";
+  import { ref, watch, computed, nextTick } from "vue";
   import _ from "lodash";
+  import { $m, $t } from "../../common/utils/globalConfig";
+  import { szdShShow } from "../searchHelp/serchHelp";
 
   const props = defineProps({
     //类型支持string,number,boolean,date,datetime,time,year,month
@@ -232,7 +237,7 @@
       type: Boolean,
       default: false
     },
-    //无多选
+    //无扩展
     noExt: {
       type: Boolean,
       default: false
@@ -249,9 +254,18 @@
       type: Boolean,
       default: true
     },
+    clearSpace: {
+      type: Boolean,
+      default: false
+    },
     selectOpt: {
       type: Boolean,
       default: false
+    },
+    //字符串查询规则操作符
+    whereOpt: {
+      type: String,
+      default: "EQ"
     },
     enter: {
       type: Boolean,
@@ -268,20 +282,20 @@
   const onlyNull = ["EN", "NN"];
   //操作符描述
   const operators = [
-    { value: "EQ", label: $t("等于") },
-    { value: "NE", label: $t("不等于") },
-    { value: "GE", label: $t("大于或等于") },
-    { value: "LE", label: $t("小于或等于") },
-    { value: "GT", label: $t("大于") },
-    { value: "LT", label: $t("小于") },
-    { value: "SP", label: $t("包含") },
-    { value: "NS", label: $t("不包含") },
-    { value: "CP", label: $t("*通配符包含") },
-    { value: "NC", label: $t("*通配符不包含") },
-    { value: "BT", label: $t("范围内") },
-    { value: "NB", label: $t("范围外") },
-    { value: "EN", label: $t("等于空") },
-    { value: "NN", label: $t("不等于空") }
+    { value: "EQ", label: $t("等于(OR)") },
+    { value: "NE", label: $t("不等于(AND)") },
+    { value: "GE", label: $t("大于等于(AND)") },
+    { value: "LE", label: $t("小于等于(AND)") },
+    { value: "GT", label: $t("大于(AND)") },
+    { value: "LT", label: $t("小于(AND)") },
+    { value: "SP", label: $t("包含(OR)") },
+    { value: "NS", label: $t("不包含(AND)") },
+    { value: "CP", label: $t("*通配符包含(OR)") },
+    { value: "NC", label: $t("*通配符不包含(AND)") },
+    { value: "BT", label: $t("范围内(OR)") },
+    { value: "NB", label: $t("范围外(AND)") },
+    { value: "EN", label: $t("等于空(OR)") },
+    { value: "NN", label: $t("不等于空(AND)") }
   ];
   //boolean数据类型
   const _boolean = ref("A");
@@ -295,13 +309,22 @@
   const _selectOpt = computed(() => {
     return props.selectOpt && props.type !== "boolean" && props.help && props.help.a;
   });
+  //字符串查询规则操作符
+  const _whereOpt = computed(() => {
+    if (props.selectOpt || props.type !== "string") return "EQ";
+    if (["EQ", "SP"].includes(props.whereOpt)) {
+      return props.whereOpt;
+    } else {
+      return "EQ";
+    }
+  });
   //查询数据
   const ranges = ref([
     {
       type: props.type,
       option: "",
-      low: "",
-      high: ""
+      low: props.type === "number" ? 0 : "",
+      high: props.type === "number" ? 0 : undefined
     }
   ]);
   //初始化行数据
@@ -309,8 +332,8 @@
     ranges.value.push({
       type: props.type,
       option: "",
-      low: "",
-      high: ""
+      low: props.type === "number" ? 0 : "",
+      high: props.type === "number" ? 0 : undefined
     });
   };
   //显示Dialog
@@ -319,28 +342,23 @@
   const initRanges = ref([]);
   //光标当前行
   const cursorRowIndex = ref(0);
+  const initRow = ref(10);
   //更新数据对象返回值
   const emit = defineEmits(["update:modelValue", "keydownEnter"]);
 
   //单输入框值改变索帮助
-  const dealSingleHelp = key => {
+  const dealSingleHelp = (row, key) => {
+    if (!_showHelp.value) return;
     const _c = props.help.c ? props.help.c : "*";
-    szdSh({
-      a: props.help.a,
-      b: ranges.value[0],
-      c: [key + "-" + _c],
-      d: props.help.d
-    }).then(res => {
-      if (res && res.chgFlag) {
-        changeSingle();
-      }
-    });
+    return { a: props.help.a, b: row, c: [key + "-" + _c], d: props.help.d, j: true };
   };
   //单输入框值改变处理
   const changeSingle = () => {
-    changeRowCheck(ranges.value[0]);
-    const result = delDuplicate();
-    emit("update:modelValue", result);
+    nextTick(() => {
+      changeRowCheck(ranges.value[0]);
+      const result = delDuplicate();
+      emit("update:modelValue", result);
+    });
   };
   //boolean入框值改变处理
   const changeBoolean = () => {
@@ -391,7 +409,7 @@
     if (e === "" || e == null || onlyNull.includes(row.option)) {
       row.low = row.high = undefined;
     } else if (!onlyHigh.includes(e)) {
-      row.high = undefined;
+      row.high = props.type === "number" ? 0 : undefined;
     }
   };
   //低值改变时触发业务
@@ -416,14 +434,14 @@
   //清空数据
   const clearRanges = () => {
     ranges.value = [];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < initRow.value; i++) {
       addRanges();
     }
   };
   //取消事件，还原初始值
   const cancel = () => {
     ranges.value = _.cloneDeep(initRanges.value);
-    visible.value = !visible.value;
+    visible.value = false;
   };
   //确认数据
   const confirm = () => {
@@ -476,8 +494,8 @@
     () => props.modelValue,
     val => {
       ranges.value = _.cloneDeep(val);
-      if (ranges.value.length < 10) {
-        for (let i = 0, len = 10 - ranges.value.length; i < len; i++) {
+      if (ranges.value.length < initRow.value) {
+        for (let i = 0, len = initRow.value - ranges.value.length; i < len; i++) {
           addRanges();
         }
       }
@@ -510,28 +528,43 @@
       row.low = row.high = undefined;
       return;
     }
+    //去掉前后空格
+    if (props.clearSpace && props.type === "string") {
+      if (row.low !== undefined && row.low !== null && row.low !== "") {
+        row.low = row.low.trim();
+      }
+      if (row.high !== undefined && row.high !== null && row.high !== "") {
+        row.high = row.high.trim();
+      }
+    }
+    //数值转化
+    if (props.type === "number") {
+      row.low = Number(row.low);
+      row.high = Number(row.high);
+    }
     //检查大小
     if (!props.noTo) {
-      if (row.high) {
-        const low = props.type === "number" ? Number(row.low) : row.low;
-        const high = props.type === "number" ? Number(row.high) : row.high;
-        if (low > high) {
+      if (row.high || (props.type === "number" && onlyHigh.includes(row.option))) {
+        if (row.low > row.high) {
           $m("CORE_CLIENT.E077", [row.low, row.high]); //低值 & 不能大于高值 &
-          row.high = undefined;
+          row.high = props.type === "number" ? 0 : undefined;
+          if (props.type === "number" && onlyHigh.includes(row.option)) row.option = "EQ";
         }
       }
     } else {
-      if (row.high) row.high = undefined;
+      if (row.high) row.high = props.type === "number" ? 0 : undefined;
     }
     //设置操作符号
     if (row.high) {
       row.option = onlyHigh.includes(row.option) ? row.option : "BT";
     } else {
       if (row.low) {
-        row.option = onlyLow.includes(row.option) ? row.option : "EQ";
         if (props.type === "string") {
-          if (row.option === "EQ" && row.low.includes("*")) row.option = "CP";
-          if ((row.option === "CP" || row.option === "NC") && !row.low.includes("*")) row.option = "EQ";
+          row.option = onlyLow.includes(row.option) ? row.option : _whereOpt.value;
+          if (row.option === _whereOpt.value && row.low.includes("*")) row.option = "CP";
+          if ((row.option === "CP" || row.option === "NC") && !row.low.includes("*")) row.option = _whereOpt.value;
+        } else {
+          row.option = onlyLow.includes(row.option) ? row.option : "EQ";
         }
       } else {
         row.option = "";
@@ -683,5 +716,19 @@
     text-align: right;
     display: flex;
     justify-content: flex-end;
+  }
+
+  .l-remark-scrollbar {
+    padding-left: 5px;
+    padding-right: 5px;
+    color: #1890ff;
+    display: block;
+    text-align: left;
+    white-space: nowrap;
+    overflow: auto;
+  }
+
+  .l-remark-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 </style>

@@ -1,38 +1,46 @@
-import sDate from "./date";
-import szdStoreSession from "../store/storeSession";
 import szdRouter from "../utils/goRouter";
 import { range } from "./range";
 import { lockOff, lockOn } from "./lock";
-import { $m, $t } from "../utils/globalConfig";
+import { $t } from "../utils/globalConfig";
+import { toolCheckAuth, toolGetGlobalParam } from "../api/tool";
 
 /**
- * 下载文件(字节流方式)
- * @param {Blob} fileStream 文件流
- * @param {String} fileType 文件类型
- * @param {String} fileName 下载的文件名称
+ * 根据权限对象和权限字段值 检查是否具有对应数据权限
+ * @param {String}  authObjCode 权限对象编码
+ * @param {String}  authVal 业务数据值，多个用逗号分隔 说明： 可以包含多个字段，用逗号分割，格式为：字段编码1=字段值1,字段编码2=字段值2
+ * @return {Promise} 检查通过返回true 否则false
  */
-function downloadFile(fileStream, fileType, fileName) {
-  // 利用a标签自定义下载文件名
-  const link = document.createElement("a");
-  // 创建Blob对象，设置文件类型
-  let blob = new Blob([fileStream], { type: `application/${fileType}` });
-  let objectUrl = URL.createObjectURL(blob); // 创建URL
-  link.href = objectUrl;
-  link.download = fileName || sDate.format(undefined, "YYYYMMDDHHmmss"); // 自定义文件名
-  link.click(); // 下载文件
-  URL.revokeObjectURL(objectUrl); // 释放内存
-  $m("CORE_CLIENT.S010"); //导出文件成功
+function checkAuth(authObjCode, authVal = "") {
+  return new Promise(resolve => {
+    toolCheckAuth({ authObjCode: authObjCode, authVal: authVal }).then(auth => {
+      resolve(auth);
+    });
+  });
+}
+
+/**
+ * 获取全局参数-键值对象
+ * @param {String}  configType 全局参数-配置类
+ * @param {String}  configKey 全局参数-参数键
+ * @return {Promise} {参数键值、参数名、参数值、参数排序、备注}
+ */
+function getGlobalParam(configType, configKey = "") {
+  return new Promise(resolve => {
+    toolGetGlobalParam({ configType: configType, configKey: configKey }).then(resConfig => {
+      resolve(resConfig);
+    });
+  });
 }
 
 /**
  * 构造树型结构数据
- * @param {*} data 数据源
- * @param {*} id id字段 默认 'id'
- * @param {*} parentId 父节点字段 默认 'parentId'
- * @param {*} children 孩子节点字段 默认 'children'
- * @param {*} rootId 根Id 默认 空
+ * @param {Array} data 数据源
+ * @param {String} id id字段
+ * @param {String} parentId 父节点字段
+ * @param {String} children 子节点字段
+ * @param {String} rootId 根Id
  */
-function getTree(data, id, parentId, children, rootId) {
+function getTree(data, id = "id", parentId = "parentId", children = "children", rootId = "") {
   id = id || "id";
   parentId = parentId || "parentId";
   children = children || "children";
@@ -54,23 +62,24 @@ function getTree(data, id, parentId, children, rootId) {
 
 /**
  * 获取联动最终值
- * @param {*} menuIds 联动选择的值
+ * @param {*} cascaders 联动选择的值
  * @return {String} 返回周后一个节点
  * */
-function getCascader(menuIds) {
-  if (menuIds && Array.isArray(menuIds)) {
-    if (menuIds.length === 0) {
+function getCascader(cascaders) {
+  if (cascaders && Array.isArray(cascaders)) {
+    if (cascaders.length === 0) {
       return "";
     } else {
-      return menuIds[menuIds.length - 1];
+      return cascaders[cascaders.length - 1];
     }
   } else {
-    return menuIds;
+    return cascaders;
   }
 }
 
 /**
- * 复制数据转化可粘贴表数据
+ * 复制Excel粘贴
+ * @return {Array} 返回表数据，列数据通过"\t"分割
  */
 async function getPaste() {
   const res = await navigator.clipboard.readText();
@@ -82,11 +91,13 @@ async function getPaste() {
 }
 
 /**
- * 标题文本处理
- * @param option 操作类型
+ * 标题操作文本
+ * @param option 操作类型 C新增 U更改 V显示
+ * @return {String} 返回操作描述
  */
 function getTitle(option) {
   if (option === "C") return $t("新增");
+  if (option === "CP") return $t("复制");
   if (option === "U") return $t("更改");
   if (option === "V") return $t("显示");
   return "";
@@ -101,47 +112,57 @@ function toCamelCase(str) {
 }
 
 /**
- * 帮助文档
- * @param {String} docId 帮助文档id
+ * 字符串转化为数组
+ * @param {String||Array} value 待转化的字符串或数组
+ * @param {String} split 拆分规则
+ * @param {Boolean} trim 去除空格
+ * @return {Array} 处理后的纯数组
  */
-function helpDoc(docId) {
-  szdRouter.goNavDg("SKIS_05B", { docId: docId });
+function convertStrToArr(value, split = ",", trim = true) {
+  if (value) {
+    let _val = [];
+    if (Array.isArray(value)) {
+      _val = value;
+    } else if (typeof value === "string") {
+      _val = value
+        .replace(/^\[|\]$/g, "") // 移除首尾的[]
+        .split(split); // 按逗号分割
+    } else {
+      return [];
+    }
+    if (trim) {
+      return _val
+        .map(item => item.trim()) // 去除每个元素的首尾空格
+        .filter(item => item); // 过滤空字符串
+    } else {
+      return _val;
+    }
+  } else {
+    return [];
+  }
 }
 
 /**
- * 打开SAP事务代码
- * @param {String} tCode 事务代码
- * @param {Object} params 地址参数
- * @param {String} okCode 功能码
+ * 帮助文档
+ * @param {String} docId 帮助文档id 命名规则：建议路由代码+表+字段 或 表+字段
+ * @param {String} docName 帮助文档名称
+ * @param {Boolean} docIdDisabled 禁止编辑docId
  */
-function goSapTCode(tCode, params = {}, okCode = " ") {
-  if (!tCode) return;
-  const sapWebguiUrl = szdStoreSession.getWebParams("sap_webgui_url");
-  if (sapWebguiUrl) {
-    let _par = "";
-    for (let key in params) {
-      if (_par) {
-        _par = _par + ";";
-      } else {
-        _par = _par + encodeURIComponent(" ");
-      }
-      _par = _par + key + "=" + encodeURIComponent(params[key]);
-    }
-    let url = sapWebguiUrl + tCode + _par + "&~OKCODE=" + encodeURIComponent(okCode);
-    window.open(url, "_blank");
-  }
+function helpDoc(docId, docName = "", docIdDisabled = false) {
+  szdRouter.goNavDg("SKIS_05B", { docId: docId, docName: docName, docIdDisabled: docIdDisabled });
 }
 
 const szdTool = {
   range,
-  downloadFile,
+  checkAuth,
+  getGlobalParam,
   getTree,
   getCascader,
   getPaste,
   getTitle,
   toCamelCase,
+  convertStrToArr,
   helpDoc,
-  goSapTCode,
   lockOn,
   lockOff
 };

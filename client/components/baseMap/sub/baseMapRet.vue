@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-  import { defineEmits, defineProps, computed } from "vue";
+  import { computed } from "vue";
   import { $t } from "../../../common/utils/globalConfig";
 
   //定义事件

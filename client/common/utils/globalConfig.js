@@ -47,7 +47,7 @@ export function $m(msgCode, param = [], showNull = false, retMsg = false) {
     message = msgObj[_mPar.msgCode][_mPar.msgNo];
   }
 
-  let _param = param ? (Array.isArray(param) ? param : [param]) : [];
+  let _param = param !== undefined && param !== null ? (Array.isArray(param) ? param : [param]) : [];
   const _paramLen = _param.length;
   //替换&,组装消息
   let mArr = message.split("&");
@@ -94,28 +94,124 @@ export function $m(msgCode, param = [], showNull = false, retMsg = false) {
 
 /**
  * 提示成功
+ * @param {String|Array} message 消息
+ * @param {Boolean} t 翻译
+ * @param {String} split 分割符
  */
-export function $mS(message) {
-  ElMessage({ message: $t(message), grouping: true, showClose: true, type: "success" });
+export function $mS(message, t = true, split = "") {
+  let msg = $mR(message, t, split);
+  ElMessage({ message: msg, grouping: true, showClose: true, type: "success" });
 }
 
 /**
  * 提示警告
+ * @param {String|Array} message 消息
+ * @param {Boolean} t 翻译
+ * @param {String} split 分割符
  */
-export function $mW(message) {
-  ElMessage({ message: $t(message), grouping: true, showClose: true, type: "warning" });
+export function $mW(message, t = true, split = "") {
+  let msg = $mR(message, t, split);
+  ElMessage({ message: msg, grouping: true, showClose: true, type: "warning" });
 }
 
 /**
  * 提示错误
+ * @param {String|Array} message 消息
+ * @param {Boolean} t 翻译
+ * @param {String} split 分割符
  */
-export function $mE(message) {
-  ElMessage({ message: $t(message), grouping: true, showClose: true, type: "error" });
+export function $mE(message, t = true, split = "") {
+  let msg = $mR(message, t, split);
+  ElMessage({ message: msg, grouping: true, showClose: true, type: "error" });
 }
 
 /**
  * 提示消息
+ * @param {String|Array} message 消息
+ * @param {Boolean} t 翻译
+ * @param {String} split 分割符
  */
-export function $mI(message) {
-  ElMessage({ message: $t(message), grouping: true, showClose: true, type: "info" });
+export function $mI(message, t = true, split = "") {
+  let msg = $mR(message, t, split);
+  ElMessage({ message: msg, grouping: true, showClose: true, type: "info" });
+}
+
+/**
+ * 获得消息组合
+ * @param {String|Array} message 消息
+ * @param {Boolean} t 翻译
+ * @param {String} split 分割符
+ * @return {String} 返回组合的消息
+ */
+export function $mR(message, t = true, split = "") {
+  if (!message) return "";
+  let _msg = "";
+  if (Array.isArray(message)) {
+    for (let i = 0; i < message.length; i++) {
+      if (message[i] !== null && message[i] !== undefined) {
+        if (split && _msg) {
+          _msg = _msg + split;
+        }
+        if (t) {
+          _msg = _msg + $t(message[i]);
+        } else {
+          _msg = _msg + message[i];
+        }
+      }
+    }
+  } else {
+    if (t) {
+      _msg = $t(message);
+    } else {
+      _msg = message;
+    }
+  }
+  return _msg;
+}
+
+/**
+ * 检查是否空, 提示消息
+ * @param val 检查的对象
+ * @param {String|Array} message 消息
+ * @param {Boolean} t 翻译
+ * @param {String} split 分割符
+ * @return {Boolean} 返回Bool
+ */
+export function $mNull(val, message, t = true, split = "") {
+  if (!val) {
+    let msg = $mR(message, t, split);
+    ElMessage({ message: msg, grouping: true, showClose: true, type: "error" });
+    return true;
+  } else {
+    return false;
+  }
+}
+
+/**
+ * 检查是否是空, 添加消息列表
+ * @param {Array}  msgList 消息列表 [{ light:指示灯 枚举：1.红灯 2.黄灯 3.绿灯 其它灰灯 retCode:消息码 retMsg:消息内容}]
+ * @param val 检查的对象
+ * @param {String|Array} message 消息
+ * @param {Boolean} t 翻译
+ * @param {String} split 分割符
+ */
+export function $mListNull(msgList, val, message, t = true, split = "") {
+  if (!val) {
+    let msg = $mR(message, t, split);
+    msgList.push({ light: "1", retCode: "E", retMsg: msg });
+  }
+}
+
+/**
+ * 添加消息列表
+ * @param {Array}  msgList 消息列表 [{ light:指示灯 枚举：1.红灯 2.黄灯 3.绿灯 其它灰灯 retCode:消息码 retMsg:消息内容}]
+ * @param {String|Array} message 消息
+ * @param {String} retCode 消息码  S成功 W警告 E失败 默认E
+ * @param {Boolean} t 翻译
+ * @param {String} split 分割符
+ */
+export function $mList(msgList, message, retCode = "E", t = true, split = "") {
+  let msg = $mR(message, t, split);
+  const _f = retCode ? retCode[0].toUpperCase() : "E";
+  msgList.push({ light: _f === "S" ? "3" : _f === "W" ? "2" : "1", retCode: retCode, retMsg: msg });
 }

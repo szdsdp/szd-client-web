@@ -12,10 +12,10 @@
     <div v-szd-dialog="[500, 300]" />
     <el-form class="app-el-form">
       <el-row>
-        <szd-input-form-item-col :span="24" v-model="varObj.variant" :label="$t('变式代码')" :maxLenth="50" required />
+        <szd-input-form-item-col :span="24" v-model="varObj.variant" label="变式代码" :maxlength="50" required />
       </el-row>
       <el-row>
-        <szd-input-form-item-col :span="24" v-model="varObj.varName" :label="$t('变式名称')" :maxLenth="100" required />
+        <szd-input-form-item-col :span="24" v-model="varObj.varName" label="变式名称" :maxlength="100" required />
       </el-row>
       <el-row>
         <szd-radio-form-item-col
@@ -32,6 +32,11 @@
       <el-row>
         <szd-checkbox v-model="varObj.varDefault" boxLabel="默认变式" />
       </el-row>
+      <el-row>
+        <el-col :span="12" style="align-items: center; display: flex">
+          <span style="color: #409eff; padding: 3px; font-size: 12px">{{ $t("注：变式代码相同覆盖原变式") }}</span>
+        </el-col>
+      </el-row>
     </el-form>
     <template #footer>
       <szd-button label="保存" type="primary" @click="handleSava" />
@@ -41,7 +46,7 @@
 </template>
 
 <script setup>
-  import { defineEmits, defineExpose, defineProps, ref } from "vue";
+  import { ref } from "vue";
   import { $m, $t } from "../../../common/utils/globalConfig";
 
   //回调事件

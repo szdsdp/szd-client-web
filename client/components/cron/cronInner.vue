@@ -1,30 +1,30 @@
 <template>
-  <div class="cron">
+  <div class="app-sub-container cron">
     <el-tabs v-model="activeName" :style="tabStyle">
       <el-tab-pane :label="$t('秒')" name="s">
-        <second-and-minute v-model="sVal" @check="validateVal"></second-and-minute>
+        <second-and-minute v-model="sVal" labelDesc="秒" @check="validateVal" />
       </el-tab-pane>
       <el-tab-pane :label="$t('分')" name="m">
-        <second-and-minute v-model="mVal" @check="validateVal"></second-and-minute>
+        <second-and-minute v-model="mVal" labelDesc="分" @check="validateVal" />
       </el-tab-pane>
       <el-tab-pane :label="$t('时')" name="h">
-        <hour v-model="hVal" @check="validateVal"></hour>
+        <hour v-model="hVal" @check="validateVal" />
       </el-tab-pane>
       <el-tab-pane :label="$t('日')" name="d">
-        <day v-model="dVal" @check="validateVal" style="pointer-events: auto"></day>
+        <day v-model="dVal" @check="validateVal" />
       </el-tab-pane>
       <el-tab-pane :label="$t('月')" name="month">
-        <month v-model="monthVal"></month>
+        <month v-model="monthVal" />
       </el-tab-pane>
       <el-tab-pane :label="$t('周')" name="week">
-        <week v-model="weekVal" @check="validateVal" style="pointer-events: auto"></week>
+        <week v-model="weekVal" @check="validateVal" />
       </el-tab-pane>
       <el-tab-pane :label="$t('年')" name="year">
-        <year v-model="yearVal" @check="validateVal"></year>
+        <year v-model="yearVal" @check="validateVal" />
       </el-tab-pane>
     </el-tabs>
-    <!-- table -->
 
+    <!-- table -->
     <el-table :data="tableData" border>
       <el-table-column prop="sVal" label="秒" />
       <el-table-column prop="mVal" label="分" />
@@ -44,6 +44,7 @@
   import month from "./cron/month";
   import week from "./cron/week";
   import year from "./cron/year";
+  import { $t } from "../../common/utils/globalConfig";
 
   export default {
     props: {
@@ -87,6 +88,7 @@
       }
     },
     methods: {
+      $t,
       updateVal(nv) {
         if (!nv) {
           return;
@@ -101,25 +103,18 @@
         this.yearVal = arrays[6];
       },
       validateVal() {
-        if (!this.dVal && !this.weekVal) {
-          return "";
-        }
         if (this.dVal === "?" && this.weekVal === "?") {
-          this.$m("CORE_CLIENT.E084");
-          this.tabStyle = "pointer-events: none;";
-        } else {
-          this.tabStyle = "pointer-events: auto;";
-        }
-        if (this.dVal !== "?" && this.weekVal !== "?") {
-          this.$m("CORE_CLIENT.E084");
-        }
-        if (this.activeName === "d") {
-          if (this.dVal !== "?") {
-            this.weekVal = "?";
+          this.$m("CORE_CLIENT.W084");
+          if (this.activeName === "d") {
+            this.weekVal = "*";
+          } else {
+            this.dVal = "*";
           }
-        }
-        if (this.activeName === "week") {
-          if (this.weekVal !== "?") {
+        } else if (this.dVal !== "?" && this.weekVal !== "?") {
+          this.$m("CORE_CLIENT.W084");
+          if (this.activeName === "d") {
+            this.weekVal = "?";
+          } else {
             this.dVal = "?";
           }
         }
@@ -144,17 +139,15 @@
   };
 </script>
 
-<style lang="css" scoped>
+<style lang="scss" scoped>
   .cron {
     text-align: left;
     padding: 10px;
     background: #fff;
-    font-size: $fz;
     border: 1px solid #dcdfe6;
-    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.12), 0 0 6px 0 rgba(0, 0, 0, 0.04);
-  }
-
-  :deep(.el-radio__input + .el-radio__label) {
     font-size: $fz;
+    box-shadow:
+      0 2px 4px 0 rgba(0, 0, 0, 0.12),
+      0 0 6px 0 rgba(0, 0, 0, 0.04);
   }
 </style>

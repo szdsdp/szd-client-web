@@ -17,18 +17,20 @@
       cursor: pointer;
     }
 
-    &.disabledBg .el-input__wrapper{
+    &.disabledBg .el-input__wrapper {
       background-color: #f5f7fa;
       cursor: default;
     }
-    &.disabledBg  .el-input__inner{
-      color:#a8abb2;
-      -webkit-text-fill-color:#a8abb2;
-      cursor:default;
+
+    &.disabledBg .el-input__inner {
+      color: #a8abb2;
+      -webkit-text-fill-color: #a8abb2;
+      cursor: default;
     }
-    &.dblclickFont .el-input__inner{
+
+    &.dblclickFont .el-input__inner {
       color: #409eff;
-      -webkit-text-fill-color:#409eff;
+      -webkit-text-fill-color: #409eff;
     }
   }
 
@@ -39,12 +41,11 @@
 
   .el-input-number {
     .el-input-number__decrease, .el-input-number__increase {
-      height: 50%;
-      right: 1px;
+      height: auto;
     }
   }
 
-  .el-input-number--small,.el-date-editor {
+  .el-input-number--small, .el-date-editor {
     width: 100%;
   }
 
@@ -77,13 +78,15 @@
     font-weight: 600;
     padding-top: 0;
     width: 25%;
-    text-align: left;
+    text-align: right;
+    justify-content: flex-end;
+    align-items: center;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     padding-left: 5px;
     padding-right: 6px;
-    height: 30px;
+    height: auto;
     line-height: 30px;
     background-color: #eef1f6;
   }
@@ -105,15 +108,6 @@
 
   }
 
-  .el-select {
-    width: 100% !important;
-  }
-
-  .el-pagination__sizes {
-    .el-select {
-      width: 90px !important;
-    }
-  }
 
   .el-select-dropdown__item {
     font-size: $fz;
@@ -145,10 +139,6 @@
     font-size: $fz;
   }
 
-  .el-radio--mini.is-bordered {
-    border-radius: 1px;
-  }
-
   .el-checkbox {
     height: 26px;
     line-height: 26px;
@@ -158,6 +148,10 @@
   .el-checkbox__input {
     border-radius: 1px;
     font-size: $fz;
+  }
+
+  .el-checkbox__input.is-disabled .el-checkbox__inner {
+    background-color: #EBEEF5;
   }
 
   .el-checkbox__label {
@@ -208,8 +202,9 @@
   }
 
 }
+
 .el-select-dropdown__item {
-    font-size: $fz;
+  font-size: $fz;
 }
 
 .el-message {
@@ -223,11 +218,20 @@
 .el-select__wrapper {
   border-radius: 0;
 }
-.el-popper::before{
+
+.el-select--small .el-select__wrapper {
+  min-height: 26px;
+}
+
+.el-popper::before {
   position: absolute;
   left: 0;
   right: 0;
   top: -5px;
   height: 5px;
   content: "";
+}
+
+.el-drawer__body {
+  padding: 10px;
 }

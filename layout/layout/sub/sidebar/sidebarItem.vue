@@ -21,7 +21,6 @@
 </template>
 
 <script setup>
-  import { defineProps } from "vue";
   import szdRouter from "../../../../client/common/utils/goRouter";
 
   const props = defineProps({

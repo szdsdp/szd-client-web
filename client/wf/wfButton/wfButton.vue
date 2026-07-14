@@ -1,98 +1,91 @@
 <template>
   <!-- 工作流按钮组件 -->
   <div class="btn">
-    <el-button type="primary" v-if="checkShow('A')" :disabled="checkAuthBtn('btn_save')" @click="clickButton('btn_check')">
-      {{ $t("检查") }}
-    </el-button>
-    <el-button type="primary" v-if="checkShow('B')" :disabled="checkAuthBtn('btn_save')" @click="clickButton('btn_save')">
-      {{ $t("保存") }}
-    </el-button>
-    <el-button type="primary" v-if="checkShow('C')" :disabled="checkAuthBtn('btn_commit')" @click="clickButton('btn_commit')">
-      {{ $t("提交") }}
-    </el-button>
-    <el-button type="primary" v-if="checkShow('D')" :disabled="checkAuthBtn('btn_approve')" @click="clickButton('btn_approve')">
-      {{ $t("同意") }}
-    </el-button>
-    <el-button type="primary" v-if="checkShow('E')" :disabled="checkAuthBtn('btn_reject')" @click="clickButton('btn_reject')">
-      {{ $t("驳回") }}
-    </el-button>
-    <el-button type="primary" v-if="checkShow('F')" :disabled="checkAuthBtn('btn_print')" @click="clickButton('btn_print')">
-      {{ $t("打印") }}
-    </el-button>
-    <el-button type="primary" v-if="checkShow('G')" :disabled="checkAuthBtn('btn_image')" @click="clickButton('btn_image')">
-      {{ $t("影像") }}
-    </el-button>
-    <el-button type="primary" v-if="checkShow('H')" :disabled="checkAuthBtn('btn_record')" @click="clickButton('btn_record')">
-      {{ $t("审批信息") }}
-    </el-button>
-    <el-button type="primary" v-if="checkShow('S')" :disabled="checkAuthBtn('btn_vch')" @click="clickButton('btn_vch')">
-      {{ $t("查看凭证") }}
-    </el-button>
-    <el-button type="primary" class="btn_more" v-if="checkShow('I')" @click="handleButMore">{{ $t("更多") }} . . . </el-button>
+    <el-button-group>
+      <el-button type="primary" v-if="checkShow('A')" :disabled="checkAuthBtn('btn_save')" @click="clickButton('btn_check')">
+        {{ getBtnLabel("A", "检查") }}
+      </el-button>
+      <el-button type="primary" v-if="checkShow('B')" :disabled="checkAuthBtn('btn_save')" @click="clickButton('btn_save')">
+        {{ getBtnLabel("B", "保存") }}
+      </el-button>
+      <el-button type="primary" v-if="checkShow('C')" :disabled="checkAuthBtn('btn_commit')" @click="clickButton('btn_commit')">
+        {{ getBtnLabel("C", "提交") }}
+      </el-button>
+      <el-button type="primary" v-if="checkShow('D')" :disabled="checkAuthBtn('btn_approve')" @click="clickButton('btn_approve')">
+        {{ getBtnLabel("D", "同意") }}
+      </el-button>
+      <el-button type="primary" v-if="checkShow('E')" :disabled="checkAuthBtn('btn_reject')" @click="clickButton('btn_reject')">
+        {{ getBtnLabel("E", "驳回") }}
+      </el-button>
+      <el-button type="primary" v-if="checkShow('F')" :disabled="checkAuthBtn('btn_print')" @click="clickButton('btn_print')">
+        {{ getBtnLabel("F", "打印") }}
+      </el-button>
+      <el-button type="primary" v-if="checkShow('G')" :disabled="checkAuthBtn('btn_image')" @click="clickButton('btn_image')">
+        {{ getBtnLabel("G", "影像") }}
+      </el-button>
+      <el-button type="primary" v-if="checkShow('H')" :disabled="checkAuthBtn('btn_record')" @click="clickButton('btn_record')">
+        {{ getBtnLabel("H", "审批信息") }}
+      </el-button>
+      <el-button type="primary" class="btn_more" v-if="checkShow('I')" @click="handleButMore">{{ getBtnLabel("I", "更多") }} . . . </el-button>
+    </el-button-group>
     <div v-show="dg.btnMoreShow" class="btn_more_view" @mouseleave="handleMouseOut">
-      <div class="btn_row">
-        <el-button type="primary" class="btn_more" v-if="checkShow('J')" :disabled="checkAuthBtn('btn_atta')" @click="clickButton('btn_atta')">
-          {{ $t("附件") }}
+      <div v-if="checkShow('J')" class="btn_row">
+        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_atta')" @click="clickButton('btn_atta')">
+          {{ getBtnLabel("J", "附件") }}
         </el-button>
       </div>
-      <div class="btn_row">
-        <el-button type="primary" class="btn_more" v-if="checkShow('K')" :disabled="checkAuthBtn('btn_revoke')" @click="clickButton('btn_revoke')">
-          {{ $t("撤回") }}
+      <div v-if="checkShow('K')" class="btn_row">
+        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_revoke')" @click="clickButton('btn_revoke')">
+          {{ getBtnLabel("K", "撤回") }}
         </el-button>
       </div>
-      <div class="btn_row">
-        <el-button
-          type="primary"
-          class="btn_more"
-          v-if="checkShow('L')"
-          :disabled="checkAuthBtn('btn_transfer')"
-          @click="clickButton('btn_transfer')">
-          {{ $t("转办") }}
+      <div v-if="checkShow('L')" class="btn_row">
+        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_transfer')" @click="clickButton('btn_transfer')">
+          {{ getBtnLabel("L", "转办") }}
         </el-button>
       </div>
-      <div class="btn_row">
-        <el-button type="primary" class="btn_more" v-if="checkShow('M')" :disabled="checkAuthBtn('btn_meeting')" @click="clickButton('btn_meeting')">
-          {{ $t("评审") }}
+      <div v-if="checkShow('M')" class="btn_row">
+        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_meeting')" @click="clickButton('btn_meeting')">
+          {{ getBtnLabel("M", "评审") }}
         </el-button>
       </div>
-      <div class="btn_row">
-        <el-button
-          type="primary"
-          class="btn_more"
-          v-if="checkShow('N')"
-          :disabled="checkAuthBtn('btn_preAddSign')"
-          @click="clickButton('btn_preAddSign')">
-          {{ $t("前加签") }}
+      <div v-if="checkShow('N')" class="btn_row">
+        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_preAddSign')" @click="clickButton('btn_preAddSign')">
+          {{ getBtnLabel("N", "前加签") }}
         </el-button>
       </div>
-      <div class="btn_row">
-        <el-button
-          type="primary"
-          class="btn_more"
-          v-if="checkShow('O')"
-          :disabled="checkAuthBtn('btn_postAddSign')"
-          @click="clickButton('btn_postAddSign')">
-          {{ $t("后加签") }}
+      <div v-if="checkShow('O')" class="btn_row">
+        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_postAddSign')" @click="clickButton('btn_postAddSign')">
+          {{ getBtnLabel("O", "后加签") }}
         </el-button>
       </div>
-      <div class="btn_row">
-        <el-button type="primary" class="btn_more" v-if="checkShow('P')" :disabled="checkAuthBtn('btn_delete')" @click="clickButton('btn_delete')">
-          {{ $t("作废") }}
+      <div v-if="checkShow('P')" class="btn_row">
+        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_delete')" @click="clickButton('btn_delete')">
+          {{ getBtnLabel("P", "作废") }}
         </el-button>
       </div>
-      <div class="btn_row">
-        <el-button type="primary" class="btn_more" v-if="checkShow('Q')" :disabled="checkAuthBtn('btn_dyWfId')" @click="clickButton('btn_dyWfId')">
-          {{ $t("设置流程") }}
+      <div v-if="checkShow('Q')" class="btn_row">
+        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_dyWfId')" @click="clickButton('btn_dyWfId')">
+          {{ getBtnLabel("Q", "设置流程") }}
         </el-button>
       </div>
-      <div class="btn_row">
-        <el-button type="primary" class="btn_more" v-if="checkShow('R')" :disabled="checkAuthBtn('btn_save')" @click="clickButton('btn_consume')">
-          {{ $t("消费记录") }}
+      <div v-if="checkShow('R')" class="btn_row">
+        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_consume')" @click="clickButton('btn_consume')">
+          {{ getBtnLabel("R", "消费记录") }}
         </el-button>
       </div>
-
-      <div class="btn_row">
-        <el-button type="primary" class="btn_more" v-if="bussBase" @click="clickButton('btn_bussBase')">
+      <div v-if="checkShow('S')" class="btn_row">
+        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_vch')" @click="clickButton('btn_vch')">
+          {{ getBtnLabel("S", "凭证预览") }}
+        </el-button>
+      </div>
+      <div v-if="checkShow('T')" class="btn_row">
+        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_remind')" @click="clickButton('btn_remind')">
+          {{ getBtnLabel("T", "催办") }}
+        </el-button>
+      </div>
+      <div v-if="bussBase" class="btn_row">
+        <el-button type="primary" class="btn_more" @click="clickButton('btn_bussBase')">
           {{ $t("业务主体") }}
         </el-button>
       </div>
@@ -100,27 +93,34 @@
     <!-- 子页面 -->
     <wfButtonAppr ref="refWfButtonAppr" @okaySubmit="okaySubmit" />
     <wfButtonTran ref="refWfButtonTran" @okaySubmit="okaySubmit" />
+    <wfButtonAdd ref="refWfButtonAdd" @okaySubmit="okaySubmit" />
+    <wfButtonRemind ref="refWfButtonRemind" />
     <wfBussBase ref="refWfBussBase" />
   </div>
 </template>
 
 <script setup>
   import "./wfButton.scss";
-  import { defineProps, defineEmits, ref } from "vue";
-  import { wfAddMeeting } from "../api/wfApi.js";
-  import { $t } from "../../common/utils/globalConfig";
+  import { computed, ref } from "vue";
+  import { wfAddMeeting, wfRemind } from "../api/wfApi.js";
+  import { $mS, $mE, $t } from "../../common/utils/globalConfig";
   import wfButtonAppr from "./wfButtonAppr.vue";
   import wfButtonTran from "./wfButtonTran.vue";
+  import wfButtonAdd from "./wfButtonAdd.vue";
+  import wfButtonRemind from "./wfButtonRemind.vue";
   import wfBussBase from "../wfBussBase/wfBussBase.vue";
   import { szdWf } from "../indexFunction";
   import { szdPop } from "../../common/message/popup";
   import szdRouter from "../../common/utils/goRouter";
+  import szdStoreSession from "../../common/store/storeSession";
 
   //更新数据对象
-  const emit = defineEmits(["submit", "consume"]);
+  const emit = defineEmits(["submit", "consume", "vchView"]);
   //子屏幕
   const refWfButtonAppr = ref();
   const refWfButtonTran = ref();
+  const refWfButtonAdd = ref();
+  const refWfButtonRemind = ref();
   const refWfBussBase = ref();
 
   const props = defineProps({
@@ -155,8 +155,10 @@
           btn_postAddSign: "", //后加签
           btn_delete: "", //作废
           btn_dyWfId: "", //动态工作流-显示的是流程ID
-          btn_consume: "" //消费记录
+          btn_consume: "", //消费记录
+          btn_remind: "" //催办
         },
+        wfBtnParam: {}, //参数设置
         wfOper: {}, //屏幕字段状态
         wfDef: {} //缺省值
       }
@@ -176,27 +178,42 @@
   const dg = ref({
     btnMoreShow: false
   });
+  //按钮权限及参数
+  const _wfOper = computed(() => {
+    let _tempWfOper = props.wfOper ? props.wfOper : {};
+    if (!_tempWfOper.wfBtn) _tempWfOper.wfBtn = {};
+    if (!_tempWfOper.wfBtnParam) _tempWfOper.wfBtnParam = {};
+    if (!_tempWfOper.wfOper) _tempWfOper.wfOper = {};
+    if (!_tempWfOper.wfDef) _tempWfOper.wfDef = {};
+    return _tempWfOper;
+  });
   //隐藏按钮
   const checkShow = key => {
-    return !props.btnHide || !props.btnHide.includes(key);
+    if (props.btnHide && props.btnHide.includes(key)) {
+      return false;
+    } else if (_wfOper.value.wfBtnParam[key] && _wfOper.value.wfBtnParam[key].active === false) {
+      return false;
+    }
+    return true;
   };
   //检查权限
   const checkAuthBtn = operate => {
-    if (!props.wfOper || !props.wfOper.wfBtn || !props.wfOper.wfBtn[operate]) {
+    if (!_wfOper.value.wfBtn[operate]) {
       return true;
-    }
-    if (props.wfOper && props.wfOper.wfOper && props.wfOper.wfOper.szdopt === "V") {
-      if (!["btn_print", "btn_atta", "btn_image", "btn_record", "btn_vch", "btn_revoke"].includes(operate)) {
-        return true;
-      }
-    }
-    if (!props.wfOper.bussId && !["btn_save", "btn_commit", "btn_dyWfId"].includes(operate)) {
+    } else if (!_wfOper.value.bussId && !["btn_save", "btn_commit", "btn_dyWfId"].includes(operate)) {
       return true;
-    }
-    if (!props.routerCode && ["btn_print"].includes(operate)) {
+    } else if (!props.routerCode && ["btn_print"].includes(operate)) {
       return true;
     }
     return false;
+  };
+  //按钮标签名称
+  const getBtnLabel = (key, label) => {
+    if (_wfOper.value.wfBtnParam[key] && _wfOper.value.wfBtnParam[key].label) {
+      return $t(_wfOper.value.wfBtnParam[key].label);
+    } else {
+      return $t(label);
+    }
   };
   //点击更多
   const handleButMore = () => {
@@ -210,60 +227,61 @@
   const clickButton = operate => {
     switch (operate) {
       case "btn_approve": //同意
-        refWfButtonAppr.value.acceptData(operate);
+        refWfButtonAppr.value.callWfDgAppr(operate, _wfOper.value.wfBtnParam["D"], _wfOper.value.bussId);
         break;
       case "btn_reject": //驳回
-        refWfButtonAppr.value.acceptData(operate);
+        refWfButtonAppr.value.callWfDgAppr(operate, _wfOper.value.wfBtnParam["E"], _wfOper.value.bussId, getWfRejectReasonFlag());
         break;
       case "btn_print": //打印
-        szdWf.goPrint(props.routerCode, props.wfOper.bussId);
+        szdWf.goPrint(props.routerCode, _wfOper.value.bussId, props.bussBase?.bstp);
         break;
       case "btn_image": //影像
         szdWf.eisImg({
-          bussId: props.wfOper.bussId,
-          userId: props.wfOper.userId,
-          szdopt: props.wfOper && props.wfOper.wfOper && props.wfOper.wfOper.szdopt === "V" ? "V" : props.wfOper.wfBtn.btn_image
+          bussId: _wfOper.value.bussId,
+          szdopt: _wfOper.value.wfOper.szdopt === "V" ? "V" : _wfOper.value.wfBtn.btn_image
         });
         break;
       case "btn_record": //审批信息
-        szdWf.wfInfo(props.wfOper.bussId);
+        szdWf.wfInfo(_wfOper.value.bussId);
         break;
       case "btn_atta": //附件
         szdWf.eisAtt({
-          bussId: props.wfOper.bussId,
-          userId: props.wfOper.userId,
-          szdopt: props.wfOper && props.wfOper.wfOper && props.wfOper.wfOper.szdopt === "V" ? "V" : props.wfOper.wfBtn.btn_atta
+          bussId: _wfOper.value.bussId,
+          szdopt: _wfOper.value.wfOper.szdopt === "V" ? "V" : _wfOper.value.wfBtn.btn_atta
         });
         break;
       case "btn_revoke": //撤回
         revokeDoc(operate);
         break;
       case "btn_transfer": //转办
-        refWfButtonTran.value.acceptData(operate);
+        refWfButtonTran.value.callWfDgTran(operate, _wfOper.value.wfBtnParam["L"]);
         break;
       case "btn_meeting": //评审
         meetingDoc();
         break;
       case "btn_preAddSign": //前加签
-        refWfButtonTran.value.acceptData(operate);
+        refWfButtonAdd.value.callWfDgAdd(operate);
         break;
       case "btn_postAddSign": //后加签
-        refWfButtonAppr.value.acceptData(operate);
+        refWfButtonAppr.value.callWfDgAppr(operate, _wfOper.value.wfBtnParam["O"], _wfOper.value.bussId);
         break;
       case "btn_delete": //作废
         deleteDoc(operate);
         break;
       case "btn_dyWfId": //设置动态工作流
-        szdRouter.goNavDg("CORE_WF_10A", { wfId: props.wfOper.wfBtn.btn_dyWfId, userId: props.wfOper.userId });
+        szdRouter.goNavDg("CORE_WF_10A", { wfId: _wfOper.value.wfBtn.btn_dyWfId, userId: _wfOper.value.userId });
         break;
       case "btn_consume": //消费记录
         emit("consume");
         break;
       case "btn_vch": //凭证预览
-        szdWf.goVch(props.wfOper.bussId);
+        emit("vchView");
+        break;
+      case "btn_remind": //催办
+        refWfButtonRemind.value.callWfDgRemind(operate, _wfOper.value.bussId);
         break;
       case "btn_bussBase": //业务主体
-        refWfBussBase.value.acceptData(props.bussBase);
+        refWfBussBase.value.callWfDgBussBase(props.bussBase);
         break;
       default:
         submitDoc(operate);
@@ -278,14 +296,14 @@
   };
   //评审单据
   const meetingDoc = () => {
-    wfAddMeeting(props.wfOper.bussId).then(() => {
-      szdRouter.goNav("CORE_PER_07A", { bussId: props.wfOper.bussId });
+    wfAddMeeting(_wfOper.value.bussId).then(() => {
+      szdRouter.goNav("CORE_PER_07A", { bussId: _wfOper.value.bussId });
     });
   };
   //作废单据
   const deleteDoc = operate => {
-    if (props.wfOper.bussDocId) {
-      refWfButtonAppr.value.acceptData(operate, props.wfOper);
+    if (_wfOper.value.bussDocId) {
+      refWfButtonAppr.value.callWfDgAppr(operate, _wfOper.value.wfBtnParam["P"], _wfOper.value.bussId, getWfRejectReasonFlag());
     } else {
       szdPop("删除的单据不能恢复,请确认?").then(() => {
         submitDoc(operate);
@@ -301,10 +319,26 @@
   };
   //工作流事件提交
   const okaySubmit = wfEvt => {
-    wfEvt.userId = props.wfOper.userId;
-    wfEvt.bussId = props.wfOper.bussId;
-    wfEvt.bussDocId = props.wfOper.bussDocId;
+    wfEvt.userId = _wfOper.value.userId;
+    wfEvt.bussId = _wfOper.value.bussId;
+    wfEvt.bussDocId = _wfOper.value.bussDocId;
     wfEvt.routerCode = props.routerCode;
     emit("submit", wfEvt);
   };
+  //检查是否启用状态
+  const getWfRejectReasonFlag = () => {
+    if (props.routerCode) {
+      const routeObj = szdStoreSession.getCoreLogin().routesObj[props.routerCode];
+      if (routeObj && routeObj.wfRejectReasonFlag === true) {
+        return true;
+      }
+    }
+    return false;
+  };
 </script>
+
+<style lang="scss" scoped>
+  :deep(.el-button-group--horizontal) > .el-button--primary:not(:last-child) {
+    border-right: unset;
+  }
+</style>

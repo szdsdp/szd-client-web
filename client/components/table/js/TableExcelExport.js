@@ -7,16 +7,28 @@ export function getExcelOutData(objData, colHead) {
   //表头
   let outData = _.cloneDeep(colHead.outData);
   //数据行
-  let l_row_len = objData.value.length;
+  let l_row_len = objData.length;
   if (l_row_len === 0) return;
   //数据列
   let l_col_len = colHead.fields.length;
   if (l_col_len === 0) return;
   //业务数据
   for (let i = 0; i < l_row_len; i++) {
+    if (objData[i]["$SZDRowHide"] === true) continue; //隐藏行不导出
     let l_arr = [];
     for (let j = 0; j < l_col_len; j++) {
-      l_arr.push(objData.value[i][colHead.fields[j]]);
+      let l_field = colHead.fields[j];
+      let l_value = objData[i][l_field];
+      if (l_value && typeof l_value === "string") {
+        let l_split = colHead.fCatUse[l_field] && colHead.fCatUse[l_field].exportSplit ? colHead.fCatUse[l_field].exportSplit : null;
+        if (l_split && typeof l_split === "string" && l_split.length > 0) {
+          const l_index = l_value.indexOf(l_split);
+          if (l_index > -1 && l_index < l_value.length - l_split.length) {
+            l_value = l_value.substring(l_index + l_split.length);
+          }
+        }
+      }
+      l_arr.push(l_value);
     }
     outData.push(l_arr);
   }
@@ -34,7 +46,7 @@ export function getExcelOutData(objData, colHead) {
 export function setExcelSumRow(lay, outData, colHead, workSheet) {
   //汇总数据-列字段
   let sum_cats = {};
-  dataSumField(lay.value.fCatCol, sum_cats);
+  dataSumField(lay.fCatCol, sum_cats);
   if (Object.keys(sum_cats).length === 0) return false;
   //数据行
   let l_row_len = outData.length - 1;

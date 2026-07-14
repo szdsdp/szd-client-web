@@ -36,10 +36,10 @@
     </template>
     <template #footer>
       <el-button :disabled="scope.$index === 0" type="primary" icon="ArrowLeft" @click="handleNextPage(-1)">
-        {{ $t("上一详情") }}
+        {{ $t("上一页") }}
       </el-button>
       <el-button :disabled="scope.$index >= dg.totalPage - 1" type="primary" icon="ArrowRight" @click="handleNextPage(1)">
-        {{ $t("下一详情") }}
+        {{ $t("下一页") }}
       </el-button>
       <el-button type="primary" @click="handleClose">
         {{ $t("关闭") }}
@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-  import { defineEmits, defineExpose, defineProps, ref } from "vue";
+  import { ref } from "vue";
   import { $t } from "../../../common/utils/globalConfig";
   import { initDataView, initDataViewSubTable } from "../js/tableView";
   import tableViewScr from "./tableViewScr.vue";

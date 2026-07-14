@@ -4,6 +4,7 @@ import store from "~store";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import errorCode from "./errorCode";
 import szdStoreCookie from "../store/storeCookie";
+import szdStoreSession from "../store/storeSession";
 
 let loading;
 let loadingNum = 0;
@@ -13,7 +14,8 @@ function startLoading() {
     loading = ElLoading.service({
       lock: true,
       text: "loading...",
-      background: "rgba(255,255,255,0)"
+      background: "rgba(255,255,255,0)",
+      customClass: "u-el-loading-cust"
     });
   }
   loadingNum++;
@@ -43,6 +45,9 @@ let messageBoxFlag = 0;
 // request拦截器
 service.interceptors.request.use(
   config => {
+    //超时设置
+    const timeoutConnect = szdStoreSession.getWebParams("timeout", false)?.[process.env.VUE_APP_SYS_CODE + "_WEB"];
+    if (timeoutConnect && timeoutConnect > 10000) config.timeout = timeoutConnect;
     // 是否需要设置 token
     const isToken = (config.headers || {}).isToken === false;
     if (szdStoreCookie.getToken() && !isToken) {
@@ -90,6 +95,7 @@ service.interceptors.response.use(
             });
         }
       }
+      return res.data;
     } else if (code === 500) {
       ElMessage({ showClose: true, message: message, type: "error" });
       return res.data; //Promise.reject(new Error(message))

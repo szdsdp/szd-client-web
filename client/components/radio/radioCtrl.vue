@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-  import { defineProps, defineEmits, computed } from "vue";
+  import { computed } from "vue";
 
   const props = defineProps({
     //输入框所需的参数

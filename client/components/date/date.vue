@@ -18,7 +18,7 @@
     @blur="handleBlur" />
 </template>
 <script setup>
-  import { defineProps, defineEmits, computed } from "vue";
+  import { computed } from "vue";
   import { $t } from "../../common/utils/globalConfig";
   import szdComp from "../../common/utils/component";
 
@@ -68,12 +68,14 @@
     date: "YYYY-MM-DD",
     dates: "YYYY-MM-DD",
     daterange: "YYYY-MM-DD",
-    datetime: "YYYY-MM-DD HH:mm:ss",
-    datetimerange: "YYYY-MM-DD HH:mm:ss",
     year: "YYYY",
     years: "YYYY",
+    yearrange: "YYYY",
     month: "YYYY-MM",
+    months: "YYYY-MM",
     monthrange: "YYYY-MM",
+    datetime: "YYYY-MM-DD HH:mm:ss",
+    datetimerange: "YYYY-MM-DD HH:mm:ss",
     week: "YYYY第ww周"
   };
 

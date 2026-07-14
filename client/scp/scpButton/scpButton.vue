@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-  import { defineEmits, defineProps, ref } from "vue";
+  import { ref } from "vue";
   import scpBussBase from "./scpBussBase.vue";
 
   //更新数据对象
@@ -34,6 +34,6 @@
 
   //显示业务主体
   const handleBussBase = () => {
-    refScpBussBase.value.acceptData(props.bussBase);
+    refScpBussBase.value.callFmDgBussBase(props.bussBase);
   };
 </script>

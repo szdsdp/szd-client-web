@@ -16,7 +16,7 @@
     @blur="handleBlur" />
 </template>
 <script setup>
-  import { defineProps, defineEmits, computed } from "vue";
+  import { computed } from "vue";
   import { $t } from "../../common/utils/globalConfig";
   import szdComp from "../../common/utils/component";
 

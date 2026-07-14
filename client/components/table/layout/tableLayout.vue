@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-  import { computed, defineEmits, defineExpose, defineProps, ref } from "vue";
+  import { computed, ref } from "vue";
   import { $m, $t } from "../../../common/utils/globalConfig";
   import tableLayoutManger from "./tableLayoutManger.vue";
   import tableLayoutColumn from "./tableLayoutColumn.vue";

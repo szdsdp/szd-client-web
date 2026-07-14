@@ -32,6 +32,7 @@
                       :numDot="itemSel.numDot"
                       :numDec="itemSel.numDec"
                       :help="itemSel.help"
+                      :whereOpt="itemSel.whereOpt"
                       :prop="itemSel.field" />
                   </div>
                 </el-row>
@@ -47,7 +48,7 @@
 <script setup>
   import "../css/table.scss";
   import { $t } from "../../../common/utils/globalConfig";
-  import { computed, defineEmits, defineProps } from "vue";
+  import { computed } from "vue";
   //回调事件
   const emit = defineEmits(["update:filterObj"]);
   const props = defineProps({

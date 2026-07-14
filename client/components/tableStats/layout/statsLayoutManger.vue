@@ -38,7 +38,6 @@
 </template>
 
 <script setup>
-  import { defineEmits, defineProps } from "vue";
   import { $m, $t } from "../../../common/utils/globalConfig";
   import { delVariant, setVarDef, removeVarDef } from "../../api/statistics";
   //回调事件
