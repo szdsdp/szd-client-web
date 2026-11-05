@@ -29,7 +29,7 @@ const mutations = {
     }
 
     // 获取名称
-    if (view.path.substr(0, 7) === "/micro/") {
+    if (view.name === "micro") {
       const ls_route = setTabMeta(view.path);
       if (ls_route) {
         view.meta.keepAlive = ls_route.meta.keepAlive;

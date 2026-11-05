@@ -13,22 +13,25 @@ import installWfFunction from "./client/wf/indexFunction";
 //零代码
 import installScpFunction from "./client/scp/indexFunction";
 import installScpComponent from "./client/scp/indexComponent";
+//AI组件
+import installAiComponent from "./client/ai/indexComponent";
 
 //固定svg图标加载
 const req = require.context("./client/assets/icons/svg", false, /.svg$/);
 req.keys().forEach(svg => {
-  req(svg);
+    req(svg);
 });
 
 const installDependency = app => {
-  installCommonFunction(app);
-  installComponent(app);
-  installComponentFunction(app);
-  installDirective(app);
-  installWfComponent(app);
-  installWfFunction(app);
-  installScpComponent(app);
-  installScpFunction(app);
+    installCommonFunction(app);
+    installComponent(app);
+    installComponentFunction(app);
+    installDirective(app);
+    installWfComponent(app);
+    installWfFunction(app);
+    installScpComponent(app);
+    installScpFunction(app);
+    installAiComponent(app);
 };
 
 export default installDependency;

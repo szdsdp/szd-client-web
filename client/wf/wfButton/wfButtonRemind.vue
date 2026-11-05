@@ -25,7 +25,7 @@
 
 <script setup>
   import { ref } from "vue";
-  import { $m, $mE, $mS, $t } from "../../common/utils/globalConfig";
+  import { $mE, $mS, $t } from "../../common/utils/globalConfig";
   import { wfRemind } from "../api/wfApi";
   //功能参数
   const dg = ref({
@@ -69,7 +69,7 @@
     form.value = {
       operate: "", //操作事件
       bussId: "", //业务ID
-      comments: "", //催办消息
+      comments: "" //催办消息
     };
   };
 

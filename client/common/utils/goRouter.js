@@ -141,7 +141,7 @@ export function goNav(routerCode, params = {}, mode = { prt: false, dialog: fals
       router.push({ name: routerObj.name, params: params }).then();
     } else {
       if (window.__POWERED_BY_QIANKUN__ && SYS_CODE !== "CORE") {
-        router.push({ path: routerObj.path.replace("/micro", ""), query: params }).then();
+        router.push({ path: routerObj.path.replace("/" + SYS_CODE.toLowerCase(), ""), query: params }).then();
       } else {
         router.push({ path: routerObj.path, query: params }).then();
       }
@@ -321,7 +321,7 @@ function closeFrameTag() {
     if (window.__POWERED_BY_QIANKUN__ && SYS_CODE !== "CORE") {
       qiankunMicro.setGlobalState({
         handle: "coreNavTab",
-        szdMircoProps: { event: "closeSelf", name: getRouterCode(), path: router.currentRoute.value.path }
+        szdMircoProps: { event: "closeSelf", name: getRouterCode(), path: router.currentRoute.value.path, sysCodeWeb: SYS_CODE }
       });
     } else {
       for (let i = 0; i < visitedViews.length; i++) {

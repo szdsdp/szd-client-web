@@ -12,6 +12,8 @@ import footStatus from "./footStatus/footStatus.vue";
 //高亮代码
 import hlt from "./hlt/hlt.vue";
 import hltDiv from "./hlt/hltDiv.vue";
+import hltDivFormItem from "./hlt/hltDivFormItem.vue";
+import hltDivFormItemCol from "./hlt/hltDivFormItemCol.vue";
 //帮助提示
 import helpTip from "./helpTip/helpTip.vue";
 //分页组件
@@ -102,6 +104,8 @@ const installComponent = app => {
   app.component("szd-dot", dot);
   app.component("szd-hlt", hlt);
   app.component("szd-hlt-div", hltDiv);
+  app.component("szd-hlt-div-form-item", hltDivFormItem);
+  app.component("szd-hlt-div-form-item-col", hltDivFormItemCol);
   app.component("szd-help-tip", helpTip);
   app.component("szd-foot-status", footStatus);
   app.component("szd-pagination", pagination);

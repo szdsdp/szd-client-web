@@ -2,6 +2,17 @@
   <!-- 工具栏按钮 -->
   <div class="bar">
     <el-button-group>
+      <!-- AI会话 -->
+      <szd-ai-chat
+        :btnLay="{ label: 'AI' }"
+        v-model:data="_dataObj"
+        :total="page.total"
+        :aiLay="_aiLay.layout"
+        :aiFst="_aiLay.aiFst"
+        :szdopt="oper.szdopt"
+        :callMethod="callMethod"
+        @aiEvent="handleAiEvent" />
+      <!-- 功能按钮 -->
       <template v-for="item in _lay.tBar.btns" :key="item.fCode">
         <el-dropdown v-if="item.fstHide !== true" :disabled="!item.children" @command="handleClick">
           <el-button
@@ -62,6 +73,7 @@
   import tableLayoutColumnDg from "./layout/tableLayoutColumnDg.vue";
   import statistics from "../tableStats/statistics.vue";
   import { excelExport, excelTmpExport, excelUpload } from "./js/TableExcel";
+  import { initAiLay } from "./js/tableAiLay";
 
   //回调事件
   const emit = defineEmits(["update:lay", "update:dataObj", "clickToolbar"]);
@@ -74,10 +86,18 @@
       type: Array,
       default: []
     },
+    //分页
+    page: {
+      type: Object,
+      default: {}
+    },
     //回调方法
     callMethod: {
       type: Function,
       default: undefined
+    },
+    oper: {
+      type: Object
     }
   });
   //子屏幕ref
@@ -104,6 +124,14 @@
   });
   //过滤按钮颜色
   const btnFilterColor = ref(Object.keys(_lay.value.fRanges).length > 0);
+  //ai参数
+  const _aiLay = computed(() => {
+    return initAiLay(_lay.value);
+  });
+  //ai事件
+  const handleAiEvent = obj => {
+    emit("clickToolbar", { fCode: "$aiEvent", obj: obj });
+  };
   //按钮回调事件
   const handleClick = fCode => {
     switch (fCode) {

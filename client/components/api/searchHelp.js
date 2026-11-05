@@ -47,7 +47,8 @@ export function syncMdm(baseField) {
 //自动补全列表
 export function getAutocompleteList(baseField, val) {
   return requestNoLoading({
-    url: "/core/dev/baseField/autocomplete/" + baseField + "/" + val,
+    // url: "/core/dev/baseField/autocomplete/" + baseField + "/" + val,
+    url: "/skis/common/autocomplete/" + baseField + "/" + val,
     method: "get"
   });
 }

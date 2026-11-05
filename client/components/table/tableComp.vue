@@ -60,7 +60,7 @@
 </template>
 
 <script setup>
-  import { ref, computed, getCurrentInstance, onMounted, nextTick, watch } from "vue";
+  import { ref, computed, onMounted, nextTick, watch } from "vue";
   import { $t } from "../../common/utils/globalConfig";
   import { dataAdd, dataCopy, dataDel, dataSum } from "./js/tableFunc";
   import { dataSortFilter } from "./js/tableFuncSortFilter";
@@ -68,7 +68,6 @@
   import tableCompColumn from "./tableCompColumn.vue";
   import tableView from "./view/tableView.vue";
 
-  const { proxy } = getCurrentInstance();
   //回调事件
   const emit = defineEmits([
     "update:lay",

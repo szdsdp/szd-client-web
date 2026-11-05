@@ -85,6 +85,10 @@
     <div v-if="type !== 'boolean' && !_selectOpt" class="u-btnWrap">
       <el-button v-if="!noExt" class="u-open" :class="['u-ruleBtn', modelValue.length > 0 ? 'active' : '']" @click="showDialog" icon="Switch" />
     </div>
+    <!-- 默认值设置 -->
+    <div v-if="varDefVal && ['date', 'year', 'month'].includes(type)" class="u-open-def">
+      <el-button @click="handleClickOpenDefVal" class="u-open-def-but">{{ $t("默认值") }}</el-button>
+    </div>
 
     <!--高级查询条件弹框-->
     <el-dialog
@@ -190,7 +194,7 @@
           </el-table-column>
           <el-table-column :label="$t('操作')" align="center" width="100">
             <template v-slot="scope">
-              <szd-button label="删除" type="primary" link @click="remove(scope.$index)" :disabled="readonly" icon="Delete" />
+              <szd-button label="删除" type="primary" link @click="remove(scope.$index)" :disabled="readonly || disabled" icon="Delete" />
             </template>
           </el-table-column>
         </el-table>
@@ -203,6 +207,14 @@
         <szd-button label="取消" type="primary" @click="cancel" />
       </template>
     </el-dialog>
+    <!-- 默认值 -->
+    <seniorSearchDefValue
+      v-if="varDefVal && ['date', 'year', 'month'].includes(type)"
+      ref="refSeniorSearchDefValue"
+      :type="type"
+      :readonly="readonly"
+      :disabled="disabled"
+      @defValueOkay="handleDefValueOkay" />
   </div>
 </template>
 <script setup>
@@ -210,6 +222,9 @@
   import _ from "lodash";
   import { $m, $t } from "../../common/utils/globalConfig";
   import { szdShShow } from "../searchHelp/serchHelp";
+  import seniorSearchDefValue from "./seniorSearchDefValue.vue";
+
+  const refSeniorSearchDefValue = ref();
 
   const props = defineProps({
     //类型支持string,number,boolean,date,datetime,time,year,month
@@ -259,6 +274,11 @@
       default: false
     },
     selectOpt: {
+      type: Boolean,
+      default: false
+    },
+    //默认值设置
+    varDefVal: {
       type: Boolean,
       default: false
     },
@@ -467,7 +487,7 @@
   });
   //删除无效行和重复行
   const delDuplicate = () => {
-    const res = ranges.value.filter(item => item.option !== "");
+    const res = ranges.value.filter(r => r.option !== "" || (props.varDefVal && r.defVal && (r.defVal.lowRule || r.defVal.highRule)));
     return Array.from(new Set(res.map(JSON.stringify)), JSON.parse);
   };
   //多选数据进行处理
@@ -663,6 +683,14 @@
     }
     return true;
   };
+  //默认值设置
+  const handleClickOpenDefVal = () => {
+    refSeniorSearchDefValue.value.callSeniorSearchDefValueOpen(ranges.value[0]);
+  };
+  const handleDefValueOkay = () => {
+    const result = delDuplicate();
+    emit("update:modelValue", result);
+  };
 </script>
 <style scoped lang="scss">
   .g-seniorWrap {
@@ -680,6 +708,17 @@
 
     .u-open {
       width: 26px;
+      height: 26px;
+      margin: 0;
+    }
+
+    .u-open-def {
+      display: flex;
+      text-align: center;
+      margin-left: 5px;
+    }
+
+    .u-open-def-but {
       height: 26px;
       margin: 0;
     }

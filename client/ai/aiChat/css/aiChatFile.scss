@@ -1,0 +1,100 @@
+.szd-ai-chat__file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  max-height: 200px;
+  overflow: auto;
+
+  .elx-files-card-content .elx-files-card-name {
+    font-size: $fz;
+  }
+
+  .elx-files-card-content .elx-files-card-name .elx-files-card-name-prefix {
+    white-space: break-spaces
+  }
+
+  .elx-files-card-content .elx-files-card-name .elx-files-card-name-suffix {
+    white-space: break-spaces;
+    display: none;
+  }
+}
+
+.szd-ai-chat__file-skill {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 12px;
+  align-items: center;
+  border-radius: 8px;
+  position: relative;
+  background: rgba(0, 0, 0, .04);
+  border: 1px solid rgba(0, 0, 0, .1);
+
+  .skill-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    background: #409eff;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fffaf0;
+  }
+
+  .skill-content {
+    flex: auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+    height: 100%;
+
+    .title {
+      flex: 0 1 auto;
+      min-width: 0;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      word-break: break-all;
+      font-size: 12px;
+    }
+  }
+
+  .skill-icon-delete {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: -8px;
+    top: -8px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 1px solid rgb(0 0 0 / 0.07);
+
+    &:hover {
+      color: #f56c6c;
+    }
+  }
+
+  &:hover .skill-icon-delete {
+    display: flex;
+  }
+
+  &:hover {
+    border: 2px solid #67c23a;
+    background-color: #f0f9eb;
+  }
+}
+

@@ -1,0 +1,56 @@
+.szd-ai-chat__main {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+
+  .szd-ai-chat__main-bland {
+    display: flex;
+    padding: 5px 15px;
+    border-bottom: 1px solid var(--szd-ai-border-color);
+    background: #fbfcfe;
+    align-items: center;
+
+    .bland__btn {
+      color: #606266;
+      font-size: 20px;
+      cursor: pointer;
+
+      &:hover {
+        color: #409eff;
+      }
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      color: #303133;
+      padding: 0 15px;
+
+      span {
+        text-align: center;
+      }
+
+      .subtitle {
+        font-size: 10px;
+        color: #606266;
+        margin-top: 5px;
+      }
+    }
+  }
+
+  .szd-ai-chat__main-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80%;
+    color: var(--szd-ai-muted-color);
+    font-size: 14px;
+  }
+}

@@ -1,6 +1,13 @@
 <template>
   <div v-if="!_fst.hide" style="width: 100%; height: 100%">
-    <el-select v-model="_modelValue" filterable :placeholder="placeholder" :clearable="clearable" :disabled="_fst.disabled" @change="handleChange">
+    <el-select
+      v-model="_modelValue"
+      filterable
+      :placeholder="placeholder"
+      :clearable="clearable"
+      :disabled="_fst.disabled"
+      :teleported="teleported"
+      @change="handleChange">
       <el-option v-for="(item, index) in _options" :key="index" :label="showKey ? item.svalname : item.sname" :value="item.svalue" />
     </el-select>
   </div>
@@ -43,6 +50,10 @@
     placeholder: {
       type: String,
       default: " "
+    },
+    teleported: {
+      type: Boolean,
+      default: true
     },
     //显示key
     showKey: {

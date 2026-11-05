@@ -62,7 +62,7 @@ const loginUser = {
         if (_loginUser && _loginUser.token === szdStoreCookie.getToken()) {
           if (window.__POWERED_BY_QIANKUN__) {
             Object.keys(_loginUser.routesObj).forEach(key => {
-              _loginUser.routesObj[key].path = _loginUser.routesObj[key].path.replace("/micro", "");
+              _loginUser.routesObj[key].path = _loginUser.routesObj[key].path.replace("/" + SYS_CODE.toLowerCase(), "");
             });
           }
           setVuexLoginUser({ commit }, _loginUser); //设置vuex
@@ -189,7 +189,8 @@ function setRoutesObj(routesArr) {
     //拼接参数
     if (item.params) _path = _path + item.params;
     //非本应用路由 微应用打开
-    if (item.sysCodeWeb !== SYS_CODE && !item.destCode) _path = `/micro${_path}`;
+    // if ((item.sysCodeWeb !== SYS_CODE || SYS_CODE === "CORE") && !item.destCode) _path = `/${item.sysCodeWeb.toLowerCase()}${_path}`;
+    if (!item.destCode) _path = `/${item.sysCodeWeb.toLowerCase()}${_path}`;
     //三方系统使用iframe打开
     if (item.destCode) _path = "/dest" + _path;
     //挂载组件地址

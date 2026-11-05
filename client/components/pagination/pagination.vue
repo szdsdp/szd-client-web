@@ -1,6 +1,6 @@
 <template>
   <!-- 通用分页组件 -->
-  <div v-show="total > 0" class="pagination-container">
+  <div v-show="total > 0" :class="position === 'right' ? 'pagination-container-r' : 'pagination-container-l'">
     <el-pagination
       v-model:current-page="_currentPage"
       v-model:page-size="_pageSize"
@@ -11,7 +11,7 @@
       :background="background"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
-      :class="position === 'right' ? 'pagination-container-right' : 'pagination-container-left'" />
+      :class="position === 'right' ? 'pagination-container-right' : ''" />
   </div>
 </template>
 
@@ -113,8 +113,7 @@
   };
 </script>
 <style scoped>
-  /* 分页 */
-  .pagination-container {
+  .pagination-container-r {
     position: relative;
     height: 50px;
     padding: 10px;
@@ -123,18 +122,24 @@
     :deep(.el-select__wrapper) {
       text-align: center;
     }
+
+    .el-pagination {
+      position: absolute;
+      height: 30px;
+    }
   }
 
-  .pagination-container .el-pagination {
-    height: 30px;
-    position: absolute;
+  .pagination-container-l {
+    box-sizing: border-box;
+    :deep(.el-select__wrapper) {
+      text-align: center;
+    }
+    .el-pagination {
+      height: 30px;
+    }
   }
 
   .pagination-container-right {
     right: 0;
-  }
-
-  .pagination-container-left {
-    left: 0;
   }
 </style>

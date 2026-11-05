@@ -6,7 +6,9 @@
       ref="refToolbar"
       v-model:lay="_lay"
       :dataObj="_dataObj"
+      :page="_page"
       :callMethod="callMethod"
+      :oper="_oper"
       @clickToolbar="handleClickToolbar" />
     <!--  输出表格  -->
     <div class="flex-1 ovh">
@@ -77,7 +79,7 @@
     oper: {
       type: Object
     },
-    //属性值绑定方法
+    //属性回调方法
     callMethod: {
       type: Function,
       default: undefined
@@ -180,7 +182,7 @@
         }
         break;
       default:
-        if (!obj.fCode.startsWith("$") || ["$upload", "$exportLay"].includes(obj.fCode)) {
+        if (!obj.fCode.startsWith("$") || ["$upload", "$exportLay", "$aiEvent"].includes(obj.fCode)) {
           handleEventImp(obj);
         }
         break;

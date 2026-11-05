@@ -1,7 +1,16 @@
 <template>
   <!-- 工作流按钮组件 -->
-  <div class="btn">
+  <div class="szd-wf-btn">
     <el-button-group>
+      <szd-ai-chat
+        v-if="_aiLay"
+        :btnLay="{ label: 'AI' }"
+        :data="data"
+        :aiLay="_aiLay.layout"
+        :aiFst="_aiLay.aiFst"
+        :szdopt="_aiLay.szdopt"
+        :callMethod="callMethod"
+        @aiEvent="handleAiEvent" />
       <el-button type="primary" v-if="checkShow('A')" :disabled="checkAuthBtn('btn_save')" @click="clickButton('btn_check')">
         {{ getBtnLabel("A", "检查") }}
       </el-button>
@@ -26,66 +35,66 @@
       <el-button type="primary" v-if="checkShow('H')" :disabled="checkAuthBtn('btn_record')" @click="clickButton('btn_record')">
         {{ getBtnLabel("H", "审批信息") }}
       </el-button>
-      <el-button type="primary" class="btn_more" v-if="checkShow('I')" @click="handleButMore">{{ getBtnLabel("I", "更多") }} . . . </el-button>
+      <el-button type="primary" class="wf-btn_more" v-if="checkShow('I')" @click="handleButMore">{{ getBtnLabel("I", "更多") }} . . . </el-button>
     </el-button-group>
-    <div v-show="dg.btnMoreShow" class="btn_more_view" @mouseleave="handleMouseOut">
-      <div v-if="checkShow('J')" class="btn_row">
-        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_atta')" @click="clickButton('btn_atta')">
+    <div v-show="dg.btnMoreShow" class="wf-btn_more_view" @mouseleave="handleMouseOut">
+      <div v-if="checkShow('J')" class="wf-btn_row">
+        <el-button type="primary" class="wf-btn_more" :disabled="checkAuthBtn('btn_atta')" @click="clickButton('btn_atta')">
           {{ getBtnLabel("J", "附件") }}
         </el-button>
       </div>
-      <div v-if="checkShow('K')" class="btn_row">
-        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_revoke')" @click="clickButton('btn_revoke')">
+      <div v-if="checkShow('K')" class="wf-btn_row">
+        <el-button type="primary" class="wf-btn_more" :disabled="checkAuthBtn('btn_revoke')" @click="clickButton('btn_revoke')">
           {{ getBtnLabel("K", "撤回") }}
         </el-button>
       </div>
-      <div v-if="checkShow('L')" class="btn_row">
-        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_transfer')" @click="clickButton('btn_transfer')">
+      <div v-if="checkShow('L')" class="wf-btn_row">
+        <el-button type="primary" class="wf-btn_more" :disabled="checkAuthBtn('btn_transfer')" @click="clickButton('btn_transfer')">
           {{ getBtnLabel("L", "转办") }}
         </el-button>
       </div>
-      <div v-if="checkShow('M')" class="btn_row">
-        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_meeting')" @click="clickButton('btn_meeting')">
+      <div v-if="checkShow('M')" class="wf-btn_row">
+        <el-button type="primary" class="wf-btn_more" :disabled="checkAuthBtn('btn_meeting')" @click="clickButton('btn_meeting')">
           {{ getBtnLabel("M", "评审") }}
         </el-button>
       </div>
-      <div v-if="checkShow('N')" class="btn_row">
-        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_preAddSign')" @click="clickButton('btn_preAddSign')">
+      <div v-if="checkShow('N')" class="wf-btn_row">
+        <el-button type="primary" class="wf-btn_more" :disabled="checkAuthBtn('btn_preAddSign')" @click="clickButton('btn_preAddSign')">
           {{ getBtnLabel("N", "前加签") }}
         </el-button>
       </div>
-      <div v-if="checkShow('O')" class="btn_row">
-        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_postAddSign')" @click="clickButton('btn_postAddSign')">
+      <div v-if="checkShow('O')" class="wf-btn_row">
+        <el-button type="primary" class="wf-btn_more" :disabled="checkAuthBtn('btn_postAddSign')" @click="clickButton('btn_postAddSign')">
           {{ getBtnLabel("O", "后加签") }}
         </el-button>
       </div>
-      <div v-if="checkShow('P')" class="btn_row">
-        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_delete')" @click="clickButton('btn_delete')">
+      <div v-if="checkShow('P')" class="wf-btn_row">
+        <el-button type="primary" class="wf-btn_more" :disabled="checkAuthBtn('btn_delete')" @click="clickButton('btn_delete')">
           {{ getBtnLabel("P", "作废") }}
         </el-button>
       </div>
-      <div v-if="checkShow('Q')" class="btn_row">
-        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_dyWfId')" @click="clickButton('btn_dyWfId')">
+      <div v-if="checkShow('Q')" class="wf-btn_row">
+        <el-button type="primary" class="wf-btn_more" :disabled="checkAuthBtn('btn_dyWfId')" @click="clickButton('btn_dyWfId')">
           {{ getBtnLabel("Q", "设置流程") }}
         </el-button>
       </div>
-      <div v-if="checkShow('R')" class="btn_row">
-        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_consume')" @click="clickButton('btn_consume')">
+      <div v-if="checkShow('R')" class="wf-btn_row">
+        <el-button type="primary" class="wf-btn_more" :disabled="checkAuthBtn('btn_consume')" @click="clickButton('btn_consume')">
           {{ getBtnLabel("R", "消费记录") }}
         </el-button>
       </div>
-      <div v-if="checkShow('S')" class="btn_row">
-        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_vch')" @click="clickButton('btn_vch')">
+      <div v-if="checkShow('S')" class="wf-btn_row">
+        <el-button type="primary" class="wf-btn_more" :disabled="checkAuthBtn('btn_vch')" @click="clickButton('btn_vch')">
           {{ getBtnLabel("S", "凭证预览") }}
         </el-button>
       </div>
-      <div v-if="checkShow('T')" class="btn_row">
-        <el-button type="primary" class="btn_more" :disabled="checkAuthBtn('btn_remind')" @click="clickButton('btn_remind')">
+      <div v-if="checkShow('T')" class="wf-btn_row">
+        <el-button type="primary" class="wf-btn_more" :disabled="checkAuthBtn('btn_remind')" @click="clickButton('btn_remind')">
           {{ getBtnLabel("T", "催办") }}
         </el-button>
       </div>
-      <div v-if="bussBase" class="btn_row">
-        <el-button type="primary" class="btn_more" @click="clickButton('btn_bussBase')">
+      <div v-if="bussBase" class="wf-btn_row">
+        <el-button type="primary" class="wf-btn_more" @click="clickButton('btn_bussBase')">
           {{ $t("业务主体") }}
         </el-button>
       </div>
@@ -102,8 +111,8 @@
 <script setup>
   import "./wfButton.scss";
   import { computed, ref } from "vue";
-  import { wfAddMeeting, wfRemind } from "../api/wfApi.js";
-  import { $mS, $mE, $t } from "../../common/utils/globalConfig";
+  import { wfAddMeeting } from "../api/wfApi.js";
+  import { $mE, $t } from "../../common/utils/globalConfig";
   import wfButtonAppr from "./wfButtonAppr.vue";
   import wfButtonTran from "./wfButtonTran.vue";
   import wfButtonAdd from "./wfButtonAdd.vue";
@@ -113,9 +122,11 @@
   import { szdPop } from "../../common/message/popup";
   import szdRouter from "../../common/utils/goRouter";
   import szdStoreSession from "../../common/store/storeSession";
+  import { initAiLay } from "../js/wfAiLay";
+  import { const_wfOper } from "../js/wfTool";
 
   //更新数据对象
-  const emit = defineEmits(["submit", "consume", "vchView"]);
+  const emit = defineEmits(["submit", "consume", "vchView", "aiEvent"]);
   //子屏幕
   const refWfButtonAppr = ref();
   const refWfButtonTran = ref();
@@ -131,37 +142,7 @@
     //按钮权限及参数
     wfOper: {
       type: Object,
-      default: {
-        userId: "", //处理人
-        bussId: "",
-        bussDocId: "",
-        routerCode: "", //业务路由
-        //工作流按钮
-        wfBtn: {
-          btn_check: "U", //检查  空不能使用，V显示 U
-          btn_save: "U", //保存
-          btn_commit: "U", //提交
-          btn_approve: "", //同意
-          btn_reject: "", //驳回
-          btn_print: "", //打印
-          btn_atta: "", //附件
-          btn_image: "", //影像
-          btn_record: "", //审批信息
-          btn_vch: "", //查看凭证
-          btn_revoke: "", //撤回
-          btn_transfer: "", //转办
-          btn_meeting: "", //评审
-          btn_preAddSign: "", //前加签
-          btn_postAddSign: "", //后加签
-          btn_delete: "", //作废
-          btn_dyWfId: "", //动态工作流-显示的是流程ID
-          btn_consume: "", //消费记录
-          btn_remind: "" //催办
-        },
-        wfBtnParam: {}, //参数设置
-        wfOper: {}, //屏幕字段状态
-        wfDef: {} //缺省值
-      }
+      default: () => ({ ...const_wfOper })
     },
     //隐藏按钮
     btnHide: {
@@ -172,6 +153,15 @@
     bussBase: {
       type: Object,
       default: {}
+    },
+    //业务数据
+    data: {
+      type: [Object, Array]
+    },
+    //回调方法
+    callMethod: {
+      type: Function,
+      default: undefined
     }
   });
   //功能参数
@@ -185,7 +175,21 @@
     if (!_tempWfOper.wfBtnParam) _tempWfOper.wfBtnParam = {};
     if (!_tempWfOper.wfOper) _tempWfOper.wfOper = {};
     if (!_tempWfOper.wfDef) _tempWfOper.wfDef = {};
+    if (!_tempWfOper.wfInst) _tempWfOper.wfInst = {};
+    if (!_tempWfOper.wfAi) _tempWfOper.wfAi = {};
     return _tempWfOper;
+  });
+  //获取AI参数
+  const _aiLay = computed(() => {
+    if (props.bussBase?.bstp) {
+      let aiLay = initAiLay(props.routerCode, _wfOper.value, props.bussBase);
+      if (!checkShow("D") || checkAuthBtn("btn_approve")) aiLay.layout.wf.hide_btn_approve = true;
+      if (!checkShow("E") || checkAuthBtn("btn_reject")) aiLay.layout.wf.hide_btn_reject = true;
+      console.log("wf-aiLay", aiLay);
+      return aiLay;
+    } else {
+      return "";
+    }
   });
   //隐藏按钮
   const checkShow = key => {
@@ -227,10 +231,10 @@
   const clickButton = operate => {
     switch (operate) {
       case "btn_approve": //同意
-        refWfButtonAppr.value.callWfDgAppr(operate, _wfOper.value.wfBtnParam["D"], _wfOper.value.bussId);
+        refWfButtonAppr.value.callWfDgAppr(operate, _wfOper.value.wfBtnParam["D"], _wfOper.value.wfInst, _wfOper.value.bussId);
         break;
       case "btn_reject": //驳回
-        refWfButtonAppr.value.callWfDgAppr(operate, _wfOper.value.wfBtnParam["E"], _wfOper.value.bussId, getWfRejectReasonFlag());
+        refWfButtonAppr.value.callWfDgAppr(operate, _wfOper.value.wfBtnParam["E"], _wfOper.value.wfInst, _wfOper.value.bussId, getWfRejectReasonFlag());
         break;
       case "btn_print": //打印
         szdWf.goPrint(props.routerCode, _wfOper.value.bussId, props.bussBase?.bstp);
@@ -263,7 +267,7 @@
         refWfButtonAdd.value.callWfDgAdd(operate);
         break;
       case "btn_postAddSign": //后加签
-        refWfButtonAppr.value.callWfDgAppr(operate, _wfOper.value.wfBtnParam["O"], _wfOper.value.bussId);
+        refWfButtonAppr.value.callWfDgAppr(operate, _wfOper.value.wfBtnParam["O"], _wfOper.value.wfInst, _wfOper.value.bussId);
         break;
       case "btn_delete": //作废
         deleteDoc(operate);
@@ -303,7 +307,7 @@
   //作废单据
   const deleteDoc = operate => {
     if (_wfOper.value.bussDocId) {
-      refWfButtonAppr.value.callWfDgAppr(operate, _wfOper.value.wfBtnParam["P"], _wfOper.value.bussId, getWfRejectReasonFlag());
+      refWfButtonAppr.value.callWfDgAppr(operate, _wfOper.value.wfBtnParam["P"], _wfOper.value.wfInst, _wfOper.value.bussId, getWfRejectReasonFlag());
     } else {
       szdPop("删除的单据不能恢复,请确认?").then(() => {
         submitDoc(operate);
@@ -334,6 +338,37 @@
       }
     }
     return false;
+  };
+  //ai事件
+  const handleAiEvent = obj => {
+    if (obj.btnMode === "approve_confirm") {
+      if (["btn_approve", "btn_reject"].includes(obj.btnCode)) {
+        if (!checkShow(obj.btnCode === "btn_approve" ? "D" : "E") || checkAuthBtn(obj.btnCode)) {
+          $mE("当前单据不允许审批");
+          return;
+        }
+        if (obj.btnCode === "btn_approve") {
+          let btnParam = _wfOper.value.wfBtnParam["D"] ? { ..._wfOper.value.wfBtnParam["D"] } : {};
+          btnParam.comments = obj.aiWfEvt.comments;
+          btnParam.aiBsObj = obj.aiWfEvt.aiBsObj;
+          refWfButtonAppr.value.callWfDgAppr("btn_approve", btnParam, _wfOper.value.wfInst, _wfOper.value.bussId);
+        } else if (obj.btnCode === "btn_reject") {
+          let btnParam = _wfOper.value.wfBtnParam["E"] ? { ..._wfOper.value.wfBtnParam["E"] } : {};
+          btnParam.comments = obj.aiWfEvt.comments;
+          btnParam.aiBsObj = obj.aiWfEvt.aiBsObj;
+          refWfButtonAppr.value.callWfDgAppr("btn_reject", btnParam, _wfOper.value.wfInst, _wfOper.value.bussId, getWfRejectReasonFlag());
+        }
+      } else if (["btn_approve", "btn_reject"].includes(obj.aiWfEvt.operate)) {
+        if (!checkShow(obj.aiWfEvt.operate === "btn_approve" ? "D" : "E") || checkAuthBtn(obj.aiWfEvt.operate)) {
+          $mE("当前单据不允许审批");
+          return;
+        }
+        let wfEvt = { operate: obj.aiWfEvt.operate, comments: obj.aiWfEvt.comments, aiBsObj: obj.aiWfEvt.aiBsObj };
+        okaySubmit(wfEvt);
+      }
+    } else {
+      emit("aiEvent", obj);
+    }
   };
 </script>
 

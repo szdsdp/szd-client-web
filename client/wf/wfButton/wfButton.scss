@@ -1,36 +1,33 @@
-.btn {
-    display: flex;
-    justify-content: flex-end;
-    padding-right: 5px;
-    position: relative;
-    width: 100%;
+.szd-wf-btn {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 5px;
+  position: relative;
+  width: 100%;
 
-    .el-button + .el-button {
-        margin-left: 5px;
-    }
-}
+  .el-button + .el-button {
+    margin-left: 5px;
+  }
 
-.btn_more {
+  .wf-btn_more {
     width: 80px;
-}
+  }
 
-.btn_more_view {
+  .wf-btn_more_view {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
     width: auto;
     height: auto;
-    position: absolute;
     right: 8px;
     padding: 60px 0px 10px 30px;
     top: -25px;
-    display: flex;
     z-index: 100;
-    flex-direction: column;
-    /* background: red; */
-}
+  }
 
-.btn_row {
-    margin-bottom: 5px;
+  .wf-btn_row {
     display: flex;
     justify-content: flex-end;
-
+    margin-bottom: 5px;
+  }
 }
-

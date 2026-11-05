@@ -123,6 +123,14 @@
                   :clicked="fCat.ctrlParam.clicked"
                   @click="handleRowChange(fCat, _scope.row, _scope.$index)" />
               </template>
+              <!--  控件类型 hlt -->
+              <template v-else-if="fCat.ctrlType === 'hlt'">
+                <szd-hlt-div
+                  :code="_scope.row[fCat.field]"
+                  :label="fCat.ctrlParam.label"
+                  :length="fCat.ctrlParam.length"
+                  :title="fCat.ctrlParam.title" />
+              </template>
               <!--  控件类型 upload -->
               <template v-else-if="fCat.ctrlType === 'upload'">
                 <szd-upload-view-ctrl

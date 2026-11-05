@@ -10,6 +10,9 @@ import { $m, $t } from "./globalConfig";
 import { ssoLogin } from "../api/login";
 import szdStoreLocal from "../store/storeLocal";
 
+//系统代码
+const SYS_CODE = process.env.VUE_APP_SYS_CODE;
+
 //进度条
 NProgress.configure({ showSpinner: false });
 //白名单
@@ -43,7 +46,7 @@ router.beforeEach((to, from, next) => {
       } else if (store.state.loginUser.user.userId === undefined) {
         store.dispatch("GetUserInfo").then(res => {
           if (res) {
-            next({ ...to, replace: true });
+            next({ path: to.path, query: to.query, hash: to.hash, replace: true });
           } else {
             store.dispatch("LogOut").then(() => {
               next({ path: "/" });
@@ -51,7 +54,7 @@ router.beforeEach((to, from, next) => {
           }
         });
       } else {
-        if (!router.hasRoute(to.name) || (window.__POWERED_BY_QIANKUN__ && to.href.toLowerCase() === "/micro/index")) {
+        if (!router.hasRoute(to.name) || (window.__POWERED_BY_QIANKUN__ && to.href.toLowerCase() === "/" + SYS_CODE.toLowerCase() + "/index")) {
           NProgress.done(); //微应用会触发多次，取消应用界面
           return;
         }
@@ -146,11 +149,15 @@ function ssoLoginBind(urlQuery, next, isBind) {
 //单点登录重新定向
 function ssoLoginRedirect(urlQuery, next) {
   const routerCode = urlQuery.routerCode;
-  const routerObj = szdRouter.getRouterObj(routerCode);
-  if (routerObj) {
-    szdRouter.goNav(routerCode, urlQuery.params);
-  } else {
+  if (!routerCode) {
     next({ path: "/" });
+  } else {
+    const routerObj = szdRouter.getRouterObj(routerCode);
+    if (routerObj) {
+      szdRouter.goNav(routerCode, urlQuery.params);
+    } else {
+      next({ path: "/" });
+    }
   }
 }
 
@@ -160,7 +167,7 @@ function ssoLoginUrlToken(to, from, next, token) {
   szdStoreCookie.setToken(to.query.token);
   store.dispatch("GetUserInfo").then(res => {
     if (res) {
-      next({ ...to, replace: true });
+      next({ path: to.path, query: to.query, hash: to.hash, replace: true });
     } else {
       store.dispatch("LogOut").then(() => {
         $m("CORE_CLIENT.E015"); //单点登录token已过期,请重新登录
